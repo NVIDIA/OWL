@@ -1,0 +1,16 @@
+For external Contributors to this project: Before we can take over any
+of your contributions we need you to read and certify the "Developer
+Certificate Of Origin" of your contributions, to be found in
+the correspondingy named file in this repo.
+
+To indicate that you have both read and agree to this certification
+please edit this file and put your name and github/gitlab handle below
+in your first push request to this repository.
+
+By listing my name below this line, I certify that I have both read
+and agree to this project's Developer Certificate of Origin:
+
+Ingo Wald, ingowald@gmail.com
+Ingo Wald, iwald@nvidia.com
+
+
