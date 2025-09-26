@@ -1,19 +1,19 @@
 
-## TensorRT OSS Contribution Rules
+## OWL OSS Contribution Rules
 
 #### Issue Tracking
 
-* All enhancement, bugfix, or change requests must begin with the creation of a [TensorRT Issue Request](https://github.com/nvidia/TensorRT/issues).
-  * The issue request must be reviewed by TensorRT engineers and approved prior to code review.
+* All enhancement, bugfix, or change requests must begin with the creation of a [OWL Issue Request](https://github.com/nvidia/OWL/issues).
+  * The issue request must be reviewed by OWL engineers and approved prior to code review.
 
 
 #### Coding Guidelines
 
-- All source code contributions must strictly adhere to the [TensorRT Coding Guidelines](CODING-GUIDELINES.md).
+- All source code contributions must strictly adhere to the [OWL Coding Guidelines](CODING-GUIDELINES.md).
 
 - In addition, please follow the existing conventions in the relevant file, submodule, module, and project when you add new code or when you extend/fix existing functionality.
 
-- To maintain consistency in code formatting and style, you should also run `clang-format` on the modified sources with the provided configuration file. This applies TensorRT code formatting rules to:
+- To maintain consistency in code formatting and style, you should also run `clang-format` on the modified sources with the provided configuration file. This applies OWL code formatting rules to:
   - class, function/method, and variable/field naming
   - comment style
   - indentation
@@ -76,12 +76,12 @@
 #### Pull Requests
 Developer workflow for code contributions is as follows:
 
-1. Developers must first [fork](https://help.github.com/en/articles/fork-a-repo) the [upstream](https://github.com/nvidia/TensorRT) TensorRT OSS repository.
+1. Developers must first [fork](https://help.github.com/en/articles/fork-a-repo) the [upstream](https://github.com/nvidia/OWL) OWL OSS repository.
 
 2. Git clone the forked repository and push changes to the personal fork.
 
   ```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_FORK.git TensorRT
+git clone https://github.com/YOUR_USERNAME/YOUR_FORK.git OWL
 # Checkout the targeted branch and commit changes
 # Push the commits to a branch on the fork (remote).
 git push -u origin <local-branch>:<remote-branch>
@@ -89,12 +89,12 @@ git push -u origin <local-branch>:<remote-branch>
 
 3. Once the code changes are staged on the fork and ready for review, a [Pull Request](https://help.github.com/en/articles/about-pull-requests) (PR) can be [requested](https://help.github.com/en/articles/creating-a-pull-request) to merge the changes from a branch of the fork into a selected branch of upstream.
   * Exercise caution when selecting the source and target branches for the PR.
-    Note that versioned releases of TensorRT OSS are posted to `release/` branches of the upstream repo.
+    Note that versioned releases of OWL OSS are posted to `release/` branches of the upstream repo.
   * Creation of a PR creation kicks off the code review process.
-  * Atleast one TensorRT engineer will be assigned for the review.
+  * Atleast one OWL engineer will be assigned for the review.
   * While under review, mark your PRs as work-in-progress by prefixing the PR title with [WIP].
 
-4. Since there is no CI/CD process in place yet, the PR will be accepted and the corresponding issue closed only after adequate testing has been completed, manually, by the developer and/or TensorRT engineer reviewing the code.
+4. Since there is no CI/CD process in place yet, the PR will be accepted and the corresponding issue closed only after adequate testing has been completed, manually, by the developer and/or OWL engineer reviewing the code.
 
 
 #### Signing Your Work
