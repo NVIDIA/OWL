@@ -1,0 +1,1924 @@
+// ======================================================================== //
+// Copyright 2019-2024 Ingo Wald                                            //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#include <owl/owl.h>
+#include "APIContext.h"
+#include "APIHandle.h"
+#include "owl/common/parallel/parallel_for.h"
+#include "Triangles.h"
+#include "UserGeom.h"
+#include "CurvesGeom.h"
+#include "SphereGeom.h"
+#include "InstanceGroup.h"
+
+#undef OWL_API
+#define OWL_API extern "C" OWL_INTERFACE
+
+using namespace owl;
+
+#if 1
+# define LOG_API_CALL() /* ignore */
+#else 
+# define LOG_API_CALL() std::cout << "% " << __FUNCTION__ << "(...)" << std::endl;
+#endif
+
+
+#define LOG(message)                            \
+  if (Context::logging())                       \
+    std::cout                                   \
+      << OWL_TERMINAL_LIGHT_BLUE                \
+      << "#owl: "                               \
+      << message                                \
+      << OWL_TERMINAL_DEFAULT << std::endl
+
+#define LOG_OK(message)                         \
+  if (Context::logging())                       \
+    std::cout                                   \
+      << OWL_TERMINAL_BLUE                      \
+      << "#owl: "                               \
+      << message                                \
+      << OWL_TERMINAL_DEFAULT << std::endl
+  
+OWL_API OWLContext owlContextCreate(int32_t *requestedDeviceIDs,
+                                    int      numRequestedDevices)
+{
+  LOG_API_CALL();
+  APIContext::SP context = std::make_shared<APIContext>(requestedDeviceIDs,
+                                                        numRequestedDevices);
+  LOG("context created...");
+  return (OWLContext)context->createHandle(context);
+}
+
+inline APIContext::SP checkGet(OWLContext _context)
+{
+  assert(_context);
+  APIContext::SP context = ((APIHandle *)_context)->get<APIContext>();
+  assert(context);
+  return context;
+}
+
+inline Buffer::SP checkGet(OWLBuffer _buffer)
+{
+  assert(_buffer);
+  Buffer::SP buffer = ((APIHandle *)_buffer)->get<Buffer>();
+  assert(buffer);
+  return buffer;
+}
+
+/* return the cuda stream associated with the given device. */
+OWL_API CUstream owlContextGetStream(OWLContext _context, int deviceID)
+{
+  LOG_API_CALL();
+  return checkGet(_context)->getDevice(deviceID)->getStream();
+}
+
+/* return the optix context associated with the given device. */
+OWL_API OptixDeviceContext owlContextGetOptixContext(OWLContext _context, int deviceID)
+{
+  LOG_API_CALL();
+  return checkGet(_context)->getDevice(deviceID)->optixContext;
+}
+
+/*! set number of ray types to be used in this context; this should be
+  done before any programs, pipelines, geometries, etc get
+  created */
+OWL_API void
+owlContextSetRayTypeCount(OWLContext _context,
+                          size_t numRayTypes)
+{
+  LOG_API_CALL();
+  checkGet(_context)->setRayTypeCount(numRayTypes);
+}
+
+OWL_API void
+owlContextSetNumAttributeValues(OWLContext _context, size_t numAttributeValues)
+{
+  LOG_API_CALL();
+  checkGet(_context)->setNumAttributeValues(numAttributeValues);
+}
+
+OWL_API void
+owlContextSetNumPayloadValues(OWLContext _context, size_t numRayPayloadValues)
+{
+  LOG_API_CALL();
+  checkGet(_context)->setNumPayloadValues(numRayPayloadValues);
+}
+
+OWL_API void
+owlContextSetBoundLaunchParamValues(OWLContext _context,
+                                    const OWLBoundValueDecl *_boundValues,
+                                    int numBoundValues)
+{
+  LOG_API_CALL();
+  if (_boundValues == nullptr && (numBoundValues == 0 || numBoundValues == -1)) 
+    return;
+  
+  assert(_boundValues);
+  if (numBoundValues == -1) {
+    // list is null terminated
+    for (numBoundValues = 0; _boundValues[numBoundValues].var.name != nullptr; numBoundValues++);
+  }
+  if (numBoundValues <= 0) return;
+
+  // check and pack into vector
+  for (int i = 0; i < numBoundValues; ++i) {
+    assert(_boundValues[i].boundValuePtr);
+  }
+  std::vector<OWLBoundValueDecl> boundValues(numBoundValues);
+  std::copy(_boundValues, _boundValues+numBoundValues, boundValues.begin());
+  checkGet(_context)->setBoundLaunchParamValues(boundValues);
+}
+
+
+/*! sets maximum instancing depth for the given context:
+
+  '0' means 'no instancing allowed, only bottom-level accels; 
+  
+  '1' means 'at most one layer of instances' (i.e., a two-level scene).
+  In other words, if the value is '1', the children of the 'root' world
+  OwlGroup we trace against can be instance groups, but every child of
+  those instance groups is a geometry group.
+
+  'N>1" means "up to N layers of instances are allowed.
+
+  The default instancing depth is 1 (i.e., a two-level scene), since
+  this allows for most use cases of instancing and is still
+  hardware-accelerated. Using a node graph with instancing deeper than
+  the configured value will result in wrong results; but be aware that
+  using any value > 1 here will come with a cost. It is recommended
+  to, if at all possible, leave this value to one and convert the
+  input scene to a two-level scene layout (i.e., with only one level of
+  instances) */
+OWL_API void
+owlSetMaxInstancingDepth(OWLContext _context,
+                         int32_t maxInstanceDepth)
+{
+  LOG_API_CALL();
+  checkGet(_context)->setMaxInstancingDepth(maxInstanceDepth);
+}
+
+
+OWL_API void
+owlEnableMotionBlur(OWLContext _context)
+{
+  LOG_API_CALL();
+  checkGet(_context)->enableMotionBlur();
+}
+
+OWL_API void
+owlContextDisablePerGeometrySBTRecords(OWLContext _context)
+{
+  LOG_API_CALL();
+  checkGet(_context)->disablePerGeometrySBTRecords();
+}
+  
+OWL_API void
+owlEnableCurves(OWLContext _context)
+{
+  LOG_API_CALL();
+  checkGet(_context)->enableCurves();
+}
+
+OWL_API void
+owlEnableSpheres(OWLContext _context)
+{
+  LOG_API_CALL();
+  checkGet(_context)->enableSpheres();
+}
+  
+OWL_API void owlBuildSBT(OWLContext _context,
+                         OWLBuildSBTFlags flags)
+{
+  LOG_API_CALL();
+  checkGet(_context)->buildSBT(flags);
+}
+
+OWL_API void owlBuildPrograms(OWLContext _context)
+{
+  LOG_API_CALL();
+  bool debug = false;
+  checkGet(_context)->buildPrograms(debug);
+}
+  
+OWL_API void owlBuildPipeline(OWLContext _context)
+{
+  LOG_API_CALL();
+  APIContext::SP context = checkGet(_context);
+  context->buildPipeline();
+}
+  
+OWL_API void owlAsyncLaunch2D(OWLRayGen _rayGen,
+                              int dims_x,
+                              int dims_y,
+                              OWLLaunchParams _launchParams)
+{
+  LOG_API_CALL();
+  owlAsyncLaunch3D(_rayGen,dims_x,dims_y,1,_launchParams);
+}
+
+OWL_API void owlAsyncLaunch3D(OWLRayGen _rayGen,
+                              int dims_x,
+                              int dims_y,
+                              int dims_z,
+                              OWLLaunchParams _launchParams)
+{
+  LOG_API_CALL();
+
+  assert(_rayGen);
+  RayGen::SP rayGen
+    = ((APIHandle *)_rayGen)->get<RayGen>();
+  assert(rayGen);
+
+  assert(_launchParams);
+  LaunchParams::SP launchParams
+    = ((APIHandle *)_launchParams)->get<LaunchParams>();
+  assert(launchParams);
+
+  rayGen->launchAsync(vec3i(dims_x,dims_y,dims_z),launchParams);
+}
+
+OWL_API void owlAsyncLaunch2DOnDevice(OWLRayGen _rayGen,
+                                      int dims_x,
+                                      int dims_y,
+                                      int deviceID,
+                                      OWLLaunchParams _launchParams)
+{
+  LOG_API_CALL();
+
+  if (!_rayGen) OWL_RAISE("invalid null rayGen program handle");
+  RayGen::SP rayGen
+    = ((APIHandle *)_rayGen)->get<RayGen>();
+  assert(rayGen);
+
+  if (!_launchParams) OWL_RAISE("invalid null launch parameters handle (you can have an _empty_ launch params, but not a null one)");
+  LaunchParams::SP launchParams
+    = ((APIHandle *)_launchParams)->get<LaunchParams>();
+  assert(launchParams);
+
+  rayGen->launchAsyncOnDevice(vec3i(dims_x,dims_y,1), deviceID,launchParams);
+}
+
+OWL_API void owlLaunch2D(OWLRayGen _rayGen,
+                         int dims_x,
+                         int dims_y,
+                         OWLLaunchParams _launchParams)
+{
+  LOG_API_CALL();
+  if (!_rayGen) OWL_RAISE("invalid null rayGen program handle");
+  owlAsyncLaunch2D(_rayGen,dims_x,dims_y,_launchParams);
+  owlLaunchSync(_launchParams);
+}
+
+OWL_API void owlLaunch3D(OWLRayGen _rayGen,
+                         int dims_x,
+                         int dims_y,
+                         int dims_z,
+                         OWLLaunchParams _launchParams)
+{
+  LOG_API_CALL();
+  if (!_rayGen) OWL_RAISE("invalid null rayGen program handle");
+  owlAsyncLaunch3D(_rayGen,dims_x,dims_y,dims_z,_launchParams);
+  owlLaunchSync(_launchParams);
+}
+
+/*! wait for the async launch to finish */
+OWL_API void
+owlLaunchSync(OWLLaunchParams _launchParams)
+{
+  assert(_launchParams);
+  LaunchParams::SP launchParams
+    = ((APIHandle *)_launchParams)->get<LaunchParams>();
+  assert(launchParams);
+  launchParams->sync();
+}
+
+OWL_API void owlRayGenLaunch3D(OWLRayGen _rayGen,
+                               int dims_x, int dims_y, int dims_z)
+{
+  LOG_API_CALL();
+
+  assert(_rayGen);
+  RayGen::SP rayGen = ((APIHandle *)_rayGen)->get<RayGen>();
+  rayGen->launch(vec3i(dims_x,dims_y,dims_z));
+}
+
+OWL_API void owlRayGenLaunch2D(OWLRayGen _rayGen,
+                               int dims_x, int dims_y)
+{
+  LOG_API_CALL();
+  owlRayGenLaunch3D(_rayGen,dims_x,dims_y,1);
+}
+
+
+OWL_API int32_t owlGetDeviceCount(OWLContext _context)
+{
+  LOG_API_CALL();
+
+  return (int32_t)checkGet(_context)->getDevices().size();
+}
+    
+
+  
+// ==================================================================
+// <object>::getVariable
+// ==================================================================
+template<typename T>
+OWLVariable
+getVariableHelper(APIHandle *handle,
+                  const char *varName)
+{
+  assert(varName);
+  assert(handle);
+  typename T::SP obj = handle->get<T>();
+  assert(obj);
+
+  if (!obj->hasVariable(varName))
+    OWL_RAISE("Trying to get reference to variable '"+std::string(varName)+
+              "' on object that does not have such a variable");
+    
+  Variable::SP var = obj->getVariable(varName);
+  assert(var);
+
+  APIContext::SP context = handle->getContext();
+  assert(context);
+
+  return(OWLVariable)context->createHandle(var);
+}
+  
+  
+OWL_API OWLVariable
+owlGeomGetVariable(OWLGeom _geom,
+                   const char *varName)
+{
+  LOG_API_CALL();
+  return getVariableHelper<Geom>((APIHandle*)_geom,varName);
+}
+
+OWL_API OWLVariable
+owlRayGenGetVariable(OWLRayGen _prog,
+                     const char *varName)
+{
+  LOG_API_CALL();
+  return getVariableHelper<RayGen>((APIHandle*)_prog,varName);
+}
+
+OWL_API OWLVariable
+owlMissProgGetVariable(OWLMissProg _prog,
+                       const char *varName)
+{
+  LOG_API_CALL();
+  return getVariableHelper<MissProg>((APIHandle*)_prog,varName);
+}
+
+OWL_API OWLVariable
+owlParamsGetVariable(OWLParams _prog,
+                     const char *varName)
+{
+  LOG_API_CALL();
+  return getVariableHelper<LaunchParams>((APIHandle*)_prog,varName);
+}
+  
+
+std::vector<OWLVarDecl> checkAndPackVariables(const OWLVarDecl *vars,
+                                              int               numVars)
+{
+  if (vars == nullptr && (numVars == 0 || numVars == -1))
+    return {};
+
+  // *copy* the vardecls here, so we can catch any potential memory
+  // *access errors early
+
+  assert(vars);
+  if (numVars == -1) {
+    // using -1 as count value for a variable list means the list is
+    // null-terminated... so just count it
+    for (numVars = 0; vars[numVars].name != nullptr; numVars++);
+  }
+  for (int i=0;i<numVars;i++)
+    assert(vars[i].name != nullptr);
+  std::vector<OWLVarDecl> varDecls(numVars);
+  std::copy(vars,vars+numVars,varDecls.begin());
+  return varDecls;
+}
+
+OWL_API OWLRayGen
+owlRayGenCreate(OWLContext       _context,
+                OWLModule        _module,
+                const char       *programName,
+                size_t            sizeOfVarStruct,
+                const OWLVarDecl *vars,
+                int               numVars)
+{
+  LOG_API_CALL();
+  APIContext::SP context = checkGet(_context);
+    
+  assert(_module);
+  Module::SP module = ((APIHandle *)_module)->get<Module>();
+  assert(module);
+    
+  RayGenType::SP rayGenType
+    = context->createRayGenType(module,programName,
+                                sizeOfVarStruct,
+                                checkAndPackVariables(vars,numVars));
+    
+  RayGen::SP rayGen = context->createRayGen(rayGenType);
+  return (OWLRayGen)context->createHandle(rayGen);
+}
+
+OWL_API OWLParams
+owlParamsCreate(OWLContext       _context,
+                size_t            sizeOfVarStruct,
+                const OWLVarDecl *vars,
+                int               numVars)
+{
+  LOG_API_CALL();
+  APIContext::SP context = checkGet(_context);
+
+  LaunchParamsType::SP  launchParamsType
+    = checkGet(_context)->createLaunchParamsType(sizeOfVarStruct,
+                                                 checkAndPackVariables(vars,numVars));
+  assert(launchParamsType);
+    
+  LaunchParams::SP  launchParams
+    = context->createLaunchParams(launchParamsType);
+  assert(launchParams);
+  return (OWLLaunchParams)context->createHandle(launchParams);
+}
+
+OWL_API void
+owlMissProgSet(OWLContext _context,
+               int rayType,
+               OWLMissProg _miss)
+{
+  LOG_API_CALL();
+
+  assert(_context);
+  MissProg::SP miss
+    = _miss
+    ? ((APIHandle *)_miss)->get<MissProg>()
+    : MissProg::SP();
+  checkGet(_context)->setMissProg(rayType,miss);
+}
+
+OWL_API OWLMissProg
+owlMissProgCreate(OWLContext       _context,
+                  OWLModule        _module,
+                  const char       *programName,
+                  size_t            sizeOfVarStruct,
+                  const OWLVarDecl *vars,
+                  int               numVars)
+{
+  LOG_API_CALL();
+ 
+  assert(_module);
+  Module::SP module
+    = ((APIHandle *)_module)->get<Module>();
+  assert(module);
+    
+  MissProgType::SP  missProgType
+    = checkGet(_context)->createMissProgType(module,programName,
+                                             sizeOfVarStruct,
+                                             checkAndPackVariables(vars,numVars));
+    
+  MissProg::SP  missProg
+    = checkGet(_context)->createMissProg(missProgType);
+  assert(missProg);
+
+  return (OWLMissProg)checkGet(_context)->createHandle(missProg);
+}
+
+  
+OWL_API OWLGroup
+owlTrianglesGeomGroupCreate(OWLContext _context,
+                            size_t numGeometries,
+                            OWLGeom *initValues,
+                            unsigned int buildFlags)
+{
+  LOG_API_CALL();
+  APIContext::SP context = checkGet(_context);
+  GeomGroup::SP  group = context->trianglesGeomGroupCreate(numGeometries, buildFlags);
+  assert(group);
+    
+  OWLGroup _group = (OWLGroup)context->createHandle(group);
+  if (initValues) {
+    for (size_t i = 0; i < numGeometries; i++) {
+      Geom::SP child = ((APIHandle *)initValues[i])->get<TrianglesGeom>();
+      assert(child);
+      group->setChild(i, child);
+    }
+  }
+  assert(_group);
+  return _group;
+}
+
+OWL_API OWLGroup
+owlUserGeomGroupCreate(OWLContext _context,
+                       size_t numGeometries,
+                       OWLGeom *initValues,
+                       unsigned int buildFlags)
+{
+  LOG_API_CALL();
+  APIContext::SP context = checkGet(_context);
+  GeomGroup::SP  group   = context->userGeomGroupCreate(numGeometries, buildFlags);
+  assert(group);
+    
+  OWLGroup _group = (OWLGroup)context->createHandle(group);
+  if (initValues) {
+    for (size_t i = 0; i < numGeometries; i++) {
+      Geom::SP child = ((APIHandle *)initValues[i])->get<UserGeom>();
+      assert(child);
+      group->setChild(i, child);
+    }
+  }
+  assert(_group);
+  return _group;
+}
+
+OWL_API OWLGroup
+owlCurvesGeomGroupCreate(OWLContext _context,
+                       size_t numGeometries,
+                       OWLGeom *initValues,
+                       unsigned int buildFlags)
+{
+  LOG_API_CALL();
+  APIContext::SP context = checkGet(_context);
+  GeomGroup::SP  group   = context->curvesGeomGroupCreate(numGeometries, buildFlags);
+  assert(group);
+    
+  OWLGroup _group = (OWLGroup)context->createHandle(group);
+  if (initValues) {
+    for (size_t i = 0; i < numGeometries; i++) {
+      Geom::SP child = ((APIHandle *)initValues[i])->get<CurvesGeom>();
+      assert(child);
+      group->setChild(i, child);
+    }
+  }
+  assert(_group);
+  return _group;
+}
+
+OWL_API OWLGroup
+owlSphereGeomGroupCreate(OWLContext _context,
+	size_t numGeometries,
+	OWLGeom* initValues,
+	unsigned int buildFlags)
+{
+	LOG_API_CALL();
+	APIContext::SP context = checkGet(_context);
+	GeomGroup::SP  group = context->sphereGeomGroupCreate(numGeometries, buildFlags);
+	assert(group);
+
+	OWLGroup _group = (OWLGroup)context->createHandle(group);
+	if (initValues) {
+		for (size_t i = 0; i < numGeometries; i++) {
+			Geom::SP child = ((APIHandle*)initValues[i])->get<SphereGeom>();
+			assert(child);
+			group->setChild(i, child);
+		}
+	}
+	assert(_group);
+	return _group;
+}
+
+OWL_API OWLGroup
+owlInstanceGroupCreate(OWLContext _context,
+                         
+                       /*! number of instances in this group */
+                       size_t     numInstances,
+                       
+                       /*! the initial list of owl groups to use by
+                         the instances in this group; must be either
+                         null, or an array of the size
+                         'numInstnaces', the i'th instnace in this
+                         gorup will be an instance o the i'th
+                         element in this list */
+                       const OWLGroup *_initGroups,
+
+                       /*! instance IDs to use for the instance in
+                         this group; must be eithe rnull, or an
+                         array of size numInstnaces. If null, the
+                         i'th child of this instance group will use
+                         instanceID=i, otherwise, it will use the
+                         user-provided instnace ID from this
+                         list. Specifying an instanceID will affect
+                         what value 'optixGetInstanceID' will return
+                         in a CH program that refers to the given
+                         instance */
+                       const uint32_t *initInstanceIDs,
+                       
+                       /*! initial list of transforms that this
+                         instance group will use; must be either
+                         null, or an array of size numInstnaces, of
+                         the format specified */
+                       const float    *initTransforms,
+                       OWLMatrixFormat matrixFormat,
+                       
+                       unsigned int buildFlags,
+                       bool useInstanceProgram)
+{
+  LOG_API_CALL();
+  std::vector<Group::SP> initGroups;
+  Group::SP *__initGroups = nullptr;
+    
+  APIContext::SP context = checkGet(_context);
+  InstanceGroup::SP  group
+    = std::make_shared<InstanceGroup>
+    (context.get(),numInstances,
+     __initGroups, buildFlags, useInstanceProgram);
+  assert(group);
+  group->createDeviceData(context->getDevices());
+
+  if (_initGroups)
+    for (size_t childID=0;childID<numInstances;childID++) {
+      OWLGroup _child = _initGroups[childID];
+      if (!_child) continue;
+        
+      Group::SP child = ((APIHandle *)_child)->get<Group>();
+      assert(child);
+      group->setChild(childID,child);
+    }
+
+  OWLGroup _group = (OWLGroup)context->createHandle(group);
+  assert(_group);
+
+  if (initTransforms)
+    owlInstanceGroupSetTransforms(_group,0,initTransforms,matrixFormat);
+
+  if (initInstanceIDs)
+    owlInstanceGroupSetInstanceIDs(_group,initInstanceIDs);
+  return _group;
+}
+
+
+OWL_API void owlContextDestroy(OWLContext _context)
+{
+  LOG_API_CALL();
+  // create and hold a reference to ourselves here, so one reference
+  // will remain alive even if the context frees all api handles.
+  APIContext::SP context = checkGet(_context);
+  context->releaseAll();
+}
+
+/*! creates a device buffer where every device has its own local
+  copy of the given buffer */
+OWL_API OWLBuffer
+owlDeviceBufferCreate(OWLContext _context,
+                      OWLDataType type,
+                      size_t count,
+                      const void *init)
+{
+  LOG_API_CALL();
+  APIContext::SP context = checkGet(_context);
+  Buffer::SP  buffer  = context->deviceBufferCreate(type,count,init);
+  assert(buffer);
+  return (OWLBuffer)context->createHandle(buffer);
+}
+
+
+/*! creates a "user"-buffer; i.e., a buffer whose allocation, filling,
+    ownership,e tc, all lie entirely within the purview of the user
+    itself. OWL will just take the provided address(es), and use them,
+    withotu any allocating, copying, etc. Only works on POD data
+    types. */
+OWL_API OWLBuffer
+owlUserBufferCreate(OWLContext  _context,
+                    OWLDataType type,
+                    size_t      count,
+                    /*! one (device-)address per device in the
+                        context */
+                    void **addresses,
+                    int numAddresses)
+{
+  LOG_API_CALL();
+  APIContext::SP context = checkGet(_context);
+  Buffer::SP  buffer
+    = context->userBufferCreate(type,count,addresses,numAddresses);
+  assert(buffer);
+  return (OWLBuffer)context->createHandle(buffer);
+}
+
+
+/*! clears a buffer in the sense that it sets the entire memory region
+  to zeroes. Note this is just a convenience function around
+  cudaMemset. */
+OWL_API void 
+owlBufferClear(OWLBuffer _buffer)
+{
+  LOG_API_CALL();
+  Buffer::SP  buffer  = checkGet(_buffer);
+  assert(buffer);
+  buffer->clear();
+}
+
+/*! create new texture of given format and dimensions - for now, we
+  only do "wrap" textures, and eithe rbilinear or nearest filter;
+  once we allow for doing things like texture borders we'll have to
+  change this api */
+OWL_API OWLTexture
+owlTexture2DCreate(OWLContext _context,
+                   OWLTexelFormat texelFormat,
+                   /*! number of texels in x dimension */
+                   uint32_t size_x,
+                   /*! number of texels in y dimension */
+                   uint32_t size_y,
+                   const void *texels,
+                   OWLTextureFilterMode filterMode,
+                   OWLTextureAddressMode addressMode_x,
+                   OWLTextureAddressMode addressMode_y,
+                   OWLTextureColorSpace colorSpace,
+                   /*! number of bytes between one line of texels and
+                     the next; '0' means 'size_x * sizeof(texel)' */
+                   uint32_t linePitchInBytes
+                   )
+{
+  LOG_API_CALL();
+  APIContext::SP context = checkGet(_context);
+  Texture::SP  texture
+    = context->texture2DCreate(texelFormat,
+                               filterMode,
+                               addressMode_x,
+                               addressMode_y,
+                               colorSpace,
+                               vec2i(size_x,size_y),
+                               linePitchInBytes,
+                               texels);
+  assert(texture);
+  return (OWLTexture)context->createHandle(texture);
+}
+
+OWL_API CUtexObject
+owlTextureGetObject(OWLTexture _texture, int deviceID)
+{
+  LOG_API_CALL();
+  assert(_texture);
+  Texture::SP texture = ((APIHandle *)_texture)->get<Texture>();
+  assert(texture);
+  return texture->getObject(deviceID);
+}
+
+OWL_API owl2ui
+owlTextureGetDimensions(OWLTexture _texture)
+{
+  LOG_API_CALL();
+  assert(_texture);
+  Texture::SP texture = ((APIHandle *)_texture)->get<Texture>();
+  assert(texture);
+  return (owl2ui&)texture->size;
+}
+
+/*! destroy the given texture; this will both release the app's
+  refcount on the given texture handle, *and* the texture itself; i.e.,
+  even if some objects still hold variables that refer to the old
+  handle the texture itself will be freed */
+OWL_API void 
+owlTexture2DDestroy(OWLTexture _texture)
+{
+  LOG_API_CALL();
+  assert(_texture);
+  APIHandle *handle = (APIHandle *)_texture;
+  assert(handle);
+    
+  Texture::SP texture = handle->get<Texture>();
+  assert(texture);
+  texture->destroy();
+
+  handle->clear();
+}
+
+/*! creates a buffer that uses CUDA host pinned memory; that memory is
+  pinned on the host and accessive to all devices in the deviec
+  group */
+OWL_API OWLBuffer
+owlHostPinnedBufferCreate(OWLContext _context,
+                          OWLDataType type,
+                          size_t      count)
+{
+  LOG_API_CALL();
+  assert(_context);
+  APIContext::SP context = ((APIHandle *)_context)->get<APIContext>();
+  assert(context);
+  Buffer::SP  buffer  = context->hostPinnedBufferCreate(type,count);
+  assert(buffer);
+  return (OWLBuffer)context->createHandle(buffer);
+}
+
+/*! creates a buffer that uses CUDA managed memory; that memory is
+  managed by CUDA (see CUDAs documentatoin on managed memory) and
+  accessive to all devices in the deviec group */
+OWL_API OWLBuffer
+owlManagedMemoryBufferCreate(OWLContext _context,
+                             OWLDataType type,
+                             size_t      count,
+                             const void *init)
+{
+  LOG_API_CALL();
+  assert(_context);
+  APIContext::SP context = ((APIHandle *)_context)->get<APIContext>();
+  assert(context);
+  Buffer::SP  buffer  = context->managedMemoryBufferCreate(type,count,init);
+  return (OWLBuffer)context->createHandle(buffer);
+}
+
+OWL_API OWLBuffer
+owlGraphicsBufferCreate(OWLContext             _context,
+                        OWLDataType            type,
+                        size_t                 count,
+                        cudaGraphicsResource_t resource)
+{
+  LOG_API_CALL();
+  assert(_context);
+  APIContext::SP context = ((APIHandle*)_context)->get<APIContext>();
+  assert(context);
+  Buffer::SP  buffer = context->graphicsBufferCreate(type, count, resource);
+  assert(buffer);
+  return (OWLBuffer)context->createHandle(buffer);
+}
+
+OWL_API void
+owlGraphicsBufferMap(OWLBuffer _buffer)
+{
+  LOG_API_CALL();
+  assert(_buffer);
+  GraphicsBuffer::SP buffer = ((APIHandle*)_buffer)->get<GraphicsBuffer>();
+  assert(buffer);
+  buffer->map();
+}
+
+OWL_API void
+owlGraphicsBufferUnmap(OWLBuffer _buffer)
+{
+  LOG_API_CALL();
+  assert(_buffer);
+  GraphicsBuffer::SP buffer = ((APIHandle*)_buffer)->get<GraphicsBuffer>();
+  assert(buffer);
+  buffer->unmap();
+}
+  
+OWL_API const void *
+owlBufferGetPointer(OWLBuffer _buffer, int deviceID)
+{
+  LOG_API_CALL();
+  assert(_buffer);
+  Buffer::SP buffer = ((APIHandle *)_buffer)->get<Buffer>();
+  assert(buffer);
+  return buffer->getPointer(buffer->context->getDevice(deviceID));
+}
+
+OWL_API OptixTraversableHandle 
+owlGroupGetTraversable(OWLGroup _group, int deviceID)
+{
+  LOG_API_CALL();
+  assert(_group);
+  Group::SP group = ((APIHandle *)_group)->get<Group>();
+  assert(group);
+  return group->getTraversable(group->context->getDevice(deviceID));
+}
+
+OWL_API CUstream
+owlParamsGetCudaStream(OWLLaunchParams _lp, int deviceID)
+{
+  LOG_API_CALL();
+  assert(_lp);
+  LaunchParams::SP lp = ((APIHandle *)_lp)->get<LaunchParams>();
+  assert(lp);
+  return lp->getCudaStream(lp->context->getDevice(deviceID));
+}
+
+OWL_API void 
+owlBufferResize(OWLBuffer _buffer, size_t newItemCount)
+{
+  LOG_API_CALL();
+  assert(_buffer);
+  Buffer::SP buffer = ((APIHandle *)_buffer)->get<Buffer>();
+  assert(buffer);
+  return buffer->resize(newItemCount);
+}
+
+OWL_API size_t
+owlBufferSizeInBytes(OWLBuffer _buffer)
+{
+  LOG_API_CALL();
+  assert(_buffer);
+  Buffer::SP buffer = ((APIHandle *)_buffer)->get<Buffer>();
+  assert(buffer);
+  return buffer->sizeInBytes();
+}
+
+OWL_API void 
+owlBufferUpload(OWLBuffer _buffer,
+                const void *hostPtr,
+                size_t offset,
+                size_t bytes)
+{
+  LOG_API_CALL();
+  assert(_buffer);
+  Buffer::SP buffer = ((APIHandle *)_buffer)->get<Buffer>();
+  assert(buffer);
+  return buffer->upload(hostPtr, offset, bytes);
+}
+
+/*! destroy the given buffer; this will both release the app's
+  refcount on the given buffer handle, *and* the buffer itself; i.e.,
+  even if some objects still hold variables that refer to the old
+  handle the buffer itself will be freed */
+OWL_API void 
+owlBufferDestroy(OWLBuffer _buffer)
+{
+  LOG_API_CALL();
+  assert(_buffer);
+  APIHandle *handle = (APIHandle *)_buffer;
+  assert(handle);
+    
+  Buffer::SP buffer = handle->get<Buffer>();
+  assert(buffer);
+  buffer->destroy();
+
+  handle->object = 0;
+}
+
+OWL_API OWLGeomType
+owlGeomTypeCreate(OWLContext       _context,
+                  OWLGeomKind       kind,
+                  size_t            varStructSize,
+                  const OWLVarDecl *vars,
+                  int               numVars)
+{
+  LOG_API_CALL();
+  assert(_context);
+  APIContext::SP context = ((APIHandle *)_context)->get<APIContext>();
+  assert(context);
+  GeomType::SP geometryType
+    = context->createGeomType(kind,varStructSize,
+                              checkAndPackVariables(vars,numVars));
+  assert(geometryType);
+  return (OWLGeomType)context->createHandle(geometryType);
+}
+  
+OWL_API OWLGeom
+owlGeomCreate(OWLContext  _context,
+              OWLGeomType _geometryType)
+{
+  assert(_geometryType);
+  APIContext::SP context = checkGet(_context);
+
+  GeomType::SP geometryType
+    = ((APIHandle *)_geometryType)->get<GeomType>();
+  assert(geometryType);
+
+  Geom::SP geometry
+    = geometryType->createGeom();
+  assert(geometry);
+
+  return (OWLGeom)context->createHandle(geometry);
+}
+  
+/*! Set the primitive count for the given user geometry. This _has_
+  to be set before the group(s) that this geom is used in get
+  built */
+OWL_API void
+owlGeomSetPrimCount(OWLGeom _geom,
+                    size_t  primCount)
+{
+  assert(_geom);
+  UserGeom::SP geom = ((APIHandle *)_geom)->get<UserGeom>();
+  geom->setPrimCount(primCount);
+}
+
+/*! Sets the buffer to use for the AABBs for user geometry. This is optional, 
+ but allows for deferring mallocs / frees during realtime tree construction. */
+OWL_API void
+owlGeomSetBoundsBuffer(OWLGeom _geom,
+                       OWLBuffer _aabbArray)
+{
+  assert(_geom);
+  UserGeom::SP geom = ((APIHandle *)_geom)->get<UserGeom>();
+  Buffer::SP aabbArray = ((APIHandle *)_aabbArray)->get<Buffer>();
+  assert(aabbArray);
+  geom->setBoundsBuffer(aabbArray);
+}
+
+/*! Sets the buffer to use for the AABBs for user geometry. This is optional, 
+ but allows for deferring mallocs / frees during realtime tree construction. */
+OWL_API void
+owlGeomSetMotionBoundsBuffers(OWLGeom _geom,
+                            OWLBuffer _aabbArrayKey0,
+                            OWLBuffer _aabbArrayKey1)
+{
+  assert(_geom);
+  UserGeom::SP geom = ((APIHandle *)_geom)->get<UserGeom>();
+  Buffer::SP aabbArrayKey0 = ((APIHandle *)_aabbArrayKey0)->get<Buffer>();
+  Buffer::SP aabbArrayKey1 = ((APIHandle *)_aabbArrayKey1)->get<Buffer>();
+  assert(aabbArrayKey0);
+  assert(aabbArrayKey1);
+  geom->setMotionBoundsBuffers(aabbArrayKey0, aabbArrayKey1);
+}
+
+OWL_API OWLModule owlModuleCreate(OWLContext _context,
+                                  const char *ptxCode)
+{
+  LOG_API_CALL();
+  assert(ptxCode);
+
+  APIContext::SP context = checkGet(_context);
+  Module::SP  module  = context->createModule(ptxCode);
+  assert(module);
+  return (OWLModule)context->createHandle(module);
+}
+
+OWL_API OWLModule owlModuleCreateFromIR(OWLContext _context, uint8_t* bytes, uint32_t numBytes)
+{
+  LOG_API_CALL();
+  
+  std::vector<uint8_t> IR(numBytes);
+  memcpy(IR.data(), bytes, numBytes);
+
+  APIContext::SP context = checkGet(_context);
+  Module::SP  module  = context->createModule(IR);
+  assert(module);
+  return (OWLModule)context->createHandle(module);
+}
+
+// ==================================================================
+// "RELEASE" functions
+// ==================================================================
+template<typename T>
+void releaseObject(APIHandle *handle)
+{
+  assert(handle);
+  delete handle;
+}
+  
+
+OWL_API void owlBufferRelease(OWLBuffer buffer)
+{
+  LOG_API_CALL();
+  releaseObject<Buffer>((APIHandle*)buffer);
+}
+  
+OWL_API void owlModuleRelease(OWLModule module) 
+{
+  LOG_API_CALL();
+  releaseObject<Module>((APIHandle*)module);
+}
+  
+OWL_API void owlGroupRelease(OWLGroup group)
+{
+  LOG_API_CALL();
+  releaseObject<Group>((APIHandle*)group);
+}
+  
+OWL_API void owlRayGenRelease(OWLRayGen handle)
+{
+  LOG_API_CALL();
+  releaseObject<RayGen>((APIHandle*)handle);
+}
+  
+OWL_API void owlVariableRelease(OWLVariable variable)
+{
+  LOG_API_CALL();
+  releaseObject<Variable>((APIHandle*)variable);
+}
+  
+OWL_API void owlGeomRelease(OWLGeom geometry)
+{
+  LOG_API_CALL();
+  releaseObject<Geom>((APIHandle*)geometry);
+}
+
+// ==================================================================
+// "Triangles" functions
+// ==================================================================
+OWL_API void
+owlTrianglesSetVertices(OWLGeom   _triangles,
+                        OWLBuffer _buffer,
+                        size_t count,
+                        size_t stride,
+                        size_t offset)
+{
+  LOG_API_CALL();
+    
+  assert(_triangles);
+  assert(_buffer);
+
+  TrianglesGeom::SP triangles
+    = ((APIHandle *)_triangles)->get<TrianglesGeom>();
+  assert(triangles);
+
+  Buffer::SP buffer
+    = ((APIHandle *)_buffer)->get<Buffer>();
+  assert(buffer);
+
+  triangles->setVertices({buffer},count,stride,offset);
+}
+
+OWL_API void
+owlTrianglesSetMotionVertices(OWLGeom _triangles,
+                              /*! number of vertex arrays
+                                passed here, the first
+                                of those is for t=0,
+                                thelast for t=1,
+                                everything is linearly
+                                interpolated
+                                in-between */
+                              size_t    numKeys,
+                              OWLBuffer *vertexArrays,
+                              size_t count,
+                              size_t stride,
+                              size_t offset)
+{
+  LOG_API_CALL();
+    
+  assert(_triangles);
+  assert(vertexArrays);
+
+  TrianglesGeom::SP triangles
+    = ((APIHandle *)_triangles)->get<TrianglesGeom>();
+  assert(triangles);
+
+  assert(numKeys >= 2);
+  std::vector<Buffer::SP> buffers;
+  for (size_t i=0;i<numKeys;i++) {
+    Buffer::SP buffer
+      = ((APIHandle *)vertexArrays[i])->get<Buffer>();
+    assert(buffer);
+    buffers.push_back(buffer);
+  }
+  triangles->setVertices(buffers,count,stride,offset);
+}
+
+OWL_API void owlGroupBuildAccel(OWLGroup _group, OWLLaunchParams _launchParams)
+{
+  LOG_API_CALL();
+    
+  assert(_group);
+
+  Group::SP group
+    = ((APIHandle *)_group)->get<Group>();
+  assert(group);
+
+  LaunchParams::SP launchParams = nullptr;
+  if (_launchParams)
+    launchParams = ((APIHandle *)_launchParams)->get<LaunchParams>();
+    
+  group->buildAccel(launchParams);
+}  
+
+/*! returns the (device) memory used for this group's acceleration
+  structure (but _excluding_ the memory for the geometries
+  itself). "memFinal" is how much memory is used for the _final_
+  version of the BVH (after it is done building), "memPeak" is peak
+  memory used during construction. passing a NULL pointer to any
+  value is valid; these values will get ignored. */
+OWL_API void owlGroupGetAccelSize(OWLGroup _group,
+                                  size_t *p_memFinal,
+                                  size_t *p_memPeak)
+{
+  LOG_API_CALL();
+    
+  assert(_group);
+
+  Group::SP group
+    = ((APIHandle *)_group)->get<Group>();
+  assert(group);
+
+  size_t memFinal, memPeak;
+  group->getAccelSize(memFinal,memPeak);
+    
+  if (p_memFinal) *p_memFinal = memFinal;
+  if (p_memPeak)  *p_memPeak  = memPeak;
+}
+
+OWL_API uint32_t 
+owlGroupGetSBTOffset(OWLGroup _group)
+{
+  LOG_API_CALL();
+    
+  assert(_group);
+
+  Group::SP group
+    = ((APIHandle *)_group)->get<Group>();
+  assert(group);
+
+  return group->getSBTOffset() * group->context->numRayTypes;
+}
+  
+OWL_API void owlGroupRefitAccel(OWLGroup _group, OWLLaunchParams _launchParams)
+{
+  LOG_API_CALL();
+    
+  assert(_group);
+
+  Group::SP group
+    = ((APIHandle *)_group)->get<Group>();
+  assert(group);
+  
+  LaunchParams::SP launchParams = nullptr;
+  if (_launchParams)
+    launchParams = ((APIHandle *)_launchParams)->get<LaunchParams>();
+
+  group->refitAccel(launchParams);
+}  
+
+OWL_API void
+owlTrianglesSetIndices(OWLGeom   _triangles,
+                       OWLBuffer _buffer,
+                       size_t count,
+                       size_t stride,
+                       size_t offset)
+{
+  LOG_API_CALL();
+    
+  assert(_triangles);
+  assert(_buffer);
+
+  TrianglesGeom::SP triangles
+    = ((APIHandle *)_triangles)->get<TrianglesGeom>();
+  assert(triangles);
+
+  Buffer::SP buffer
+    = ((APIHandle *)_buffer)->get<Buffer>();
+  assert(buffer);
+
+  triangles->setIndices(buffer,count,stride,offset);
+}
+
+// ==================================================================
+// function pointer setters ....
+// ==================================================================
+OWL_API void
+owlGeomTypeSetClosestHit(OWLGeomType _geometryType,
+                         int             rayType,
+                         OWLModule       _module,
+                         const char     *progName)
+{
+  LOG_API_CALL();
+    
+  assert(_geometryType);
+  assert(_module);
+  assert(progName);
+
+  GeomType::SP geometryType
+    = ((APIHandle *)_geometryType)->get<GeomType>();
+  assert(geometryType);
+
+  Module::SP module
+    = ((APIHandle *)_module)->get<Module>();
+  assert(module);
+
+  geometryType->setClosestHitProgram(rayType,module,progName);
+}
+
+OWL_API void
+owlGeomTypeSetAnyHit(OWLGeomType _geometryType,
+                     int             rayType,
+                     OWLModule       _module,
+                     const char     *progName)
+{
+  LOG_API_CALL();
+    
+  assert(_geometryType);
+  assert(_module);
+  assert(progName);
+
+  GeomType::SP geometryType
+    = ((APIHandle *)_geometryType)->get<GeomType>();
+  assert(geometryType);
+
+  Module::SP module
+    = ((APIHandle *)_module)->get<Module>();
+  assert(module);
+
+  geometryType->setAnyHitProgram(rayType,module,progName);
+}
+
+OWL_API void
+owlGeomTypeSetIntersectProg(OWLGeomType _geometryType,
+                            int             rayType,
+                            OWLModule       _module,
+                            const char     *progName)
+{
+  LOG_API_CALL();
+    
+  assert(_geometryType);
+  assert(_module);
+  assert(progName);
+
+  UserGeomType::SP geometryType
+    = ((APIHandle *)_geometryType)->get<UserGeomType>();
+  assert(geometryType);
+
+  Module::SP module
+    = ((APIHandle *)_module)->get<Module>();
+  assert(module);
+
+  geometryType->setIntersectProg(rayType,module,progName);
+}
+  
+OWL_API void
+owlGeomTypeSetBoundsProg(OWLGeomType _geometryType,
+                         OWLModule       _module,
+                         const char     *progName)
+{
+  LOG_API_CALL();
+    
+  assert(_geometryType);
+  assert(_module);
+  assert(progName);
+
+  UserGeomType::SP geometryType
+    = ((APIHandle *)_geometryType)->get<UserGeomType>();
+  assert(geometryType);
+
+  Module::SP module
+    = ((APIHandle *)_module)->get<Module>();
+  assert(module);
+
+  geometryType->setBoundsProg(module,progName);
+}
+
+OWL_API void
+owlGeomTypeSetMotionBoundsProg(OWLGeomType _geometryType,
+                               OWLModule       _module,
+                               const char     *progName)
+{
+  LOG_API_CALL();
+    
+  assert(_geometryType);
+  assert(_module);
+  assert(progName);
+
+  UserGeomType::SP geometryType
+    = ((APIHandle *)_geometryType)->get<UserGeomType>();
+  assert(geometryType);
+
+  Module::SP module
+    = ((APIHandle *)_module)->get<Module>();
+  assert(module);
+
+  geometryType->setMotionBoundsProg(module,progName);
+}
+
+#define FATAL(error) { std::cerr << "FATAL Error: " << error << std::endl; exit(1); }
+
+// ==================================================================
+// "VariableSet" functions, for each element type
+// ==================================================================
+
+template<typename T>
+void setVariable(APIHandle *handle, const T &value)
+{
+  assert(handle);
+
+  Variable::SP variable
+    = handle->get<Variable>();
+  assert(variable);
+
+  variable->set(value);
+}
+
+
+#define _OWL_VARIABLE_SETTERS(stype,abb)                                \
+  OWL_API void owlVariableSet1##abb(OWLVariable var,                    \
+                                    stype v)                            \
+  {                                                                     \
+    LOG_API_CALL();                                                     \
+    setVariable((APIHandle *)var,v);                                    \
+  }                                                                     \
+  OWL_API void owlVariableSet2##abb(OWLVariable var,                    \
+                                    stype x,                            \
+                                    stype y)                            \
+  {                                                                     \
+    LOG_API_CALL();                                                     \
+    setVariable((APIHandle *)var,vec2##abb(x,y));                       \
+  }                                                                     \
+  OWL_API void owlVariableSet2##abb##v(OWLVariable var,                 \
+                                       const stype *v)                  \
+  {                                                                     \
+    LOG_API_CALL();                                                     \
+    setVariable((APIHandle *)var,vec2##abb(v[0],v[1]));                 \
+  }                                                                     \
+  OWL_API void owlVariableSet3##abb(OWLVariable var,                    \
+                                    stype x,                            \
+                                    stype y,                            \
+                                    stype z)                            \
+  {                                                                     \
+    LOG_API_CALL();                                                     \
+    setVariable((APIHandle *)var,vec3##abb(x,y,z));                     \
+  }                                                                     \
+  OWL_API void owlVariableSet3##abb##v(OWLVariable var,                 \
+                                       const stype *v)                  \
+  {                                                                     \
+    LOG_API_CALL();                                                     \
+    setVariable((APIHandle *)var,vec3##abb(v[0],v[1],v[2]));            \
+  }                                                                     \
+  OWL_API void owlVariableSet4##abb(OWLVariable var,                    \
+                                    stype x,                            \
+                                    stype y,                            \
+                                    stype z,                            \
+                                    stype w)                            \
+  {                                                                     \
+    LOG_API_CALL();                                                     \
+    setVariable((APIHandle *)var,vec4##abb(x,y,z,w));                   \
+  }                                                                     \
+  OWL_API void owlVariableSet4##abb##v(OWLVariable var,                 \
+                                       const stype *v)                  \
+  {                                                                     \
+    LOG_API_CALL();                                                     \
+    setVariable((APIHandle *)var,vec4##abb(v[0],v[1],v[2],v[3]));       \
+  }                                                                     \
+  /*end of macro */
+_OWL_VARIABLE_SETTERS(bool,b)
+_OWL_VARIABLE_SETTERS(int8_t,c)
+_OWL_VARIABLE_SETTERS(uint8_t,uc)
+_OWL_VARIABLE_SETTERS(int16_t,s)
+_OWL_VARIABLE_SETTERS(uint16_t,us)
+_OWL_VARIABLE_SETTERS(int32_t,i)
+_OWL_VARIABLE_SETTERS(uint32_t,ui)
+_OWL_VARIABLE_SETTERS(int64_t,l)
+_OWL_VARIABLE_SETTERS(uint64_t,ul)
+_OWL_VARIABLE_SETTERS(float,f)
+_OWL_VARIABLE_SETTERS(double,d)
+#undef _OWL_VARIABLE_SETTERS
+
+
+#define OBJECT_SETTERS_T(OType,stype,abb)                       \
+  OWL_API void owl##OType##Set1##abb(OWL##OType object,         \
+                                     const char *varName,       \
+                                     stype x)                   \
+  {                                                             \
+    OWLVariable var                                             \
+      = owl##OType##GetVariable(object,varName);                \
+    owlVariableSet1##abb(var,x);                                \
+    owlVariableRelease(var);                                    \
+  }                                                             \
+  OWL_API void owl##OType##Set2##abb(OWL##OType object,         \
+                                     const char *varName,       \
+                                     stype x,                   \
+                                     stype y)                   \
+  {                                                             \
+    OWLVariable var                                             \
+      = owl##OType##GetVariable(object,varName);                \
+    owlVariableSet2##abb(var,x,y);                              \
+    owlVariableRelease(var);                                    \
+  }                                                             \
+  OWL_API void owl##OType##Set2##abb##v(OWL##OType object,      \
+                                        const char *varName,    \
+                                        const stype *v)         \
+  {                                                             \
+    OWLVariable var                                             \
+      = owl##OType##GetVariable(object,varName);                \
+    owlVariableSet2##abb(var,v[0],v[1]);                        \
+    owlVariableRelease(var);                                    \
+  }                                                             \
+  OWL_API void owl##OType##Set3##abb(OWL##OType object,         \
+                                     const char *varName,       \
+                                     stype x,                   \
+                                     stype y,                   \
+                                     stype z)                   \
+  {                                                             \
+    OWLVariable var                                             \
+      = owl##OType##GetVariable(object,varName);                \
+    owlVariableSet3##abb(var,x,y,z);                            \
+    owlVariableRelease(var);                                    \
+  }                                                             \
+  OWL_API void owl##OType##Set3##abb##v(OWL##OType object,      \
+                                        const char *varName,    \
+                                        const stype *v)         \
+  {                                                             \
+    OWLVariable var                                             \
+      = owl##OType##GetVariable(object,varName);                \
+    owlVariableSet3##abb(var,v[0],v[1],v[2]);                   \
+    owlVariableRelease(var);                                    \
+  }                                                             \
+  OWL_API void owl##OType##Set4##abb(OWL##OType object,         \
+                                     const char *varName,       \
+                                     stype x,                   \
+                                     stype y,                   \
+                                     stype z,                   \
+                                     stype w)                   \
+  {                                                             \
+    OWLVariable var                                             \
+      = owl##OType##GetVariable(object,varName);                \
+    owlVariableSet4##abb(var,x,y,z,w);                          \
+    owlVariableRelease(var);                                    \
+  }                                                             \
+  OWL_API void owl##OType##Set4##abb##v(OWL##OType object,      \
+                                        const char *varName,    \
+                                        const stype *v)         \
+  {                                                             \
+    OWLVariable var                                             \
+      = owl##OType##GetVariable(object,varName);                \
+    owlVariableSet4##abb(var,v[0],v[1],v[2],v[3]);              \
+    owlVariableRelease(var);                                    \
+  }                                                             \
+
+
+#define OBJECT_META_SETTERS(OType)                              \
+  OWL_API void owl##OType##SetTexture(OWL##OType object,        \
+                                      const char *varName,      \
+                                      OWLTexture v)             \
+  {                                                             \
+    OWLVariable var                                             \
+      = owl##OType##GetVariable(object,varName);                \
+    owlVariableSetTexture(var,v);                               \
+    owlVariableRelease(var);                                    \
+  }                                                             \
+  OWL_API void owl##OType##SetBuffer(OWL##OType object,         \
+                                     const char *varName,       \
+                                     OWLBuffer v)               \
+  {                                                             \
+    OWLVariable var                                             \
+      = owl##OType##GetVariable(object,varName);                \
+    owlVariableSetBuffer(var,v);                                \
+    owlVariableRelease(var);                                    \
+  }                                                             \
+  OWL_API void owl##OType##SetGroup(OWL##OType object,          \
+                                    const char *varName,        \
+                                    OWLGroup v)                 \
+  {                                                             \
+    OWLVariable var                                             \
+      = owl##OType##GetVariable(object,varName);                \
+    owlVariableSetGroup(var,v);                                 \
+    owlVariableRelease(var);                                    \
+  }                                                             \
+  OWL_API void owl##OType##SetPointer(OWL##OType object,        \
+                                      const char *varName,      \
+                                      const void *v)            \
+  {                                                             \
+    OWLVariable var                                             \
+      = owl##OType##GetVariable(object,varName);                \
+    owlVariableSetPointer(var,v);                               \
+    owlVariableRelease(var);                                    \
+  }                                                             \
+  OWL_API void owl##OType##SetRaw(OWL##OType object,            \
+                                  const char *varName,          \
+                                  const void *v,                \
+                                  int devID)                    \
+  {                                                             \
+    OWLVariable var                                             \
+      = owl##OType##GetVariable(object,varName);                \
+    owlVariableSetRaw(var,v,devID);                             \
+    owlVariableRelease(var);                                    \
+  }                                                             \
+  
+
+
+#define OBJECT_SETTERS(ObjectType)              \
+  OBJECT_SETTERS_T(ObjectType,bool,b)           \
+  OBJECT_SETTERS_T(ObjectType,char,c)           \
+  OBJECT_SETTERS_T(ObjectType,uint8_t,uc)       \
+  OBJECT_SETTERS_T(ObjectType,int16_t,s)        \
+  OBJECT_SETTERS_T(ObjectType,uint16_t,us)      \
+  OBJECT_SETTERS_T(ObjectType,int32_t,i)        \
+  OBJECT_SETTERS_T(ObjectType,uint32_t,ui)      \
+  OBJECT_SETTERS_T(ObjectType,float,f)          \
+  OBJECT_SETTERS_T(ObjectType,int64_t,l)        \
+    OBJECT_SETTERS_T(ObjectType,uint64_t,ul)    \
+  OBJECT_SETTERS_T(ObjectType,double,d)         \
+  OBJECT_META_SETTERS(ObjectType)               \
+
+OBJECT_SETTERS(RayGen)
+OBJECT_SETTERS(Geom)
+OBJECT_SETTERS(Params)
+OBJECT_SETTERS(MissProg)
+
+
+
+
+
+  
+  
+// ----------- set<other> -----------
+OWL_API void owlVariableSetGroup(OWLVariable _variable, OWLGroup _group)
+{
+  LOG_API_CALL();
+
+  APIHandle *handle = (APIHandle*)_group;
+  Group::SP group
+    = handle
+    ? handle->get<Group>()
+    : Group::SP();
+    
+  setVariable((APIHandle *)_variable,group);
+}
+
+// ----------- set<other> -----------
+OWL_API void owlVariableSetTexture(OWLVariable _variable, OWLTexture _texture)
+{
+  LOG_API_CALL();
+
+  APIHandle *handle = (APIHandle*)_texture;
+  Texture::SP texture
+    = handle
+    ? handle->get<Texture>()
+    : Texture::SP();
+    
+  setVariable((APIHandle *)_variable,texture);
+}
+
+OWL_API void owlVariableSetBuffer(OWLVariable _variable, OWLBuffer _buffer)
+{
+  LOG_API_CALL();
+
+  APIHandle *handle = (APIHandle*)_buffer;
+  Buffer::SP buffer
+    = handle
+    ? handle->get<Buffer>()
+    : Buffer::SP();
+
+  setVariable((APIHandle *)_variable,buffer);
+}
+
+OWL_API void owlVariableSetRaw(OWLVariable _variable, const void *valuePtr, int devID)
+{
+  LOG_API_CALL();
+
+  APIHandle *handle = (APIHandle*)_variable;
+  assert(handle);
+
+  Variable::SP variable
+    = handle->get<Variable>();
+  assert(variable);
+
+  variable->setRaw(valuePtr, devID);
+}
+
+OWL_API void owlVariableSetPointer(OWLVariable _variable, const void *valuePtr)
+{
+  LOG_API_CALL();
+
+  APIHandle *handle = (APIHandle*)_variable;
+  assert(handle);
+
+  Variable::SP variable
+    = handle->get<Variable>();
+  assert(variable);
+
+  variable->set((uint64_t)valuePtr);
+}
+
+// -------------------------------------------------------
+// group/hierarchy creation and setting
+// -------------------------------------------------------
+OWL_API void
+owlInstanceGroupSetChild(OWLGroup _group,
+                         int whichChild,
+                         OWLGroup _child)
+{
+  LOG_API_CALL();
+
+  assert(_group);
+  InstanceGroup::SP group = ((APIHandle*)_group)->get<InstanceGroup>();
+  assert(group);
+
+  assert(_child);
+  Group::SP child = ((APIHandle *)_child)->get<Group>();
+  assert(child);
+
+  group->setChild(whichChild, child);
+}
+
+/*! this function allows to set up to N different arrays of trnsforms
+  for motion blur; the first such array is used as transforms for
+  t=0, the last one for t=1.  */
+OWL_API void
+owlInstanceGroupSetTransforms(OWLGroup _group,
+                              uint32_t timeStep,
+                              const float *floatsForThisStimeStep,
+                              OWLMatrixFormat matrixFormat)
+{
+  LOG_API_CALL();
+
+  assert(_group);
+  InstanceGroup::SP group = ((APIHandle*)_group)->get<InstanceGroup>();
+  assert(group);
+
+  group->setTransforms(timeStep,floatsForThisStimeStep,matrixFormat);
+}
+  
+OWL_API void
+owlInstanceGroupSetInstanceIDs(OWLGroup _group,
+                               const uint32_t *instanceIDs)
+{
+  LOG_API_CALL();
+
+  assert(_group);
+  InstanceGroup::SP group = ((APIHandle*)_group)->get<InstanceGroup>();
+  assert(group);
+
+  group->setInstanceIDs(instanceIDs);
+}
+
+OWL_API void
+owlInstanceGroupSetVisibilityMasks(OWLGroup _group,
+                                   const uint8_t *visibilityMasks)
+{
+  LOG_API_CALL();
+
+  assert(_group);
+  InstanceGroup::SP group = ((APIHandle*)_group)->get<InstanceGroup>();
+  assert(group);
+
+  group->setVisibilityMasks(visibilityMasks);
+}
+
+OWL_API void
+owlInstanceGroupSetInstanceProg(OWLGroup _group,
+                                OWLModule _module,
+                                const char *progName)
+{
+  LOG_API_CALL();
+    
+  assert(_module);
+  assert(progName);
+
+  assert(_group);
+  InstanceGroup::SP group = ((APIHandle*)_group)->get<InstanceGroup>();
+  assert(group);
+
+  Module::SP module
+    = ((APIHandle *)_module)->get<Module>();
+  assert(module);
+
+  assert("geometry multiplier must be disabled to use instance programs." 
+    && module->context->perGeometrySBTRecordsDisabled == true);
+
+  group->setInstanceProg(module,progName);
+}
+
+OWL_API void
+owlInstanceGroupSetMotionInstanceProg(OWLGroup _group,
+                                      OWLModule _module,
+                                      const char *progName)
+{
+  LOG_API_CALL();
+    
+  assert(_module);
+  assert(progName);
+
+  assert(_group);
+  InstanceGroup::SP group = ((APIHandle*)_group)->get<InstanceGroup>();
+  assert(group);
+
+  Module::SP module
+    = ((APIHandle *)_module)->get<Module>();
+  assert(module);
+
+  assert("geometry multiplier must be disabled to use instance programs." 
+    && module->context->perGeometrySBTRecordsDisabled == true);
+
+  assert("motion blur must be enabled to use motion instance programs." 
+    && module->context->motionBlurEnabled == true);
+  
+  group->setMotionInstanceProg(module,progName);
+}
+  
+OWL_API void
+owlInstanceGroupSetTransform(OWLGroup _group,
+                             int whichChild,
+                             const float *floats,
+                             OWLMatrixFormat matrixFormat)
+{
+  LOG_API_CALL();
+
+  assert("check for valid transform" && floats != nullptr);
+  affine3f xfm;
+  switch(matrixFormat) {
+  case OWL_MATRIX_FORMAT_OWL:
+    xfm = *(const affine3f*)floats;
+    break;
+  case OWL_MATRIX_FORMAT_ROW_MAJOR:
+    xfm.l.vx = vec3f(floats[0+0],floats[4+0],floats[8+0]);
+    xfm.l.vy = vec3f(floats[0+1],floats[4+1],floats[8+1]);
+    xfm.l.vz = vec3f(floats[0+2],floats[4+2],floats[8+2]);
+    xfm.p    = vec3f(floats[0+3],floats[4+3],floats[8+3]);
+    break;
+  default: 
+    FATAL("un-recognized matrix format");
+  }
+    
+  assert(_group);
+  InstanceGroup::SP group = ((APIHandle*)_group)->get<InstanceGroup>();
+  assert(group);
+
+  group->setTransform(whichChild, xfm);
+}
+
+
+
+/*! sets curve degree (1="linear", 2="quadratic b-spline", 3="cubic
+    b-spline"), as well as whether end-caps need to get added for
+    non-linear curves (linear curves always have end-caps, no matter
+    what this value is */
+OWL_API void owlCurvesSetDegree(OWLGeomType _curvesGT,
+                                int     degree,
+                                bool    capped)
+{
+  LOG_API_CALL();
+    
+  assert(_curvesGT);
+
+  CurvesGeomType::SP curvesGT
+    = ((APIHandle *)_curvesGT)->get<CurvesGeomType>();
+  assert(curvesGT);
+
+  curvesGT->setDegree(degree,capped);
+}
+
+/*! sets the array of control points, and their associated curve
+    width. */
+OWL_API void owlCurvesSetControlPoints(OWLGeom _curves,
+                                       int numControlPoints,
+                                       /*! buffer of (one vec3f per
+                                         control point) that
+                                         specifies curve width */
+                                       OWLBuffer _vertices,
+                                       /*! buffer of (one float per
+                                           control point) the curve
+                                           width of that control
+                                           point */
+                                       OWLBuffer _widths)
+{
+  LOG_API_CALL();
+    
+  assert(_curves);
+  assert(_vertices);
+  assert(_widths);
+
+  CurvesGeom::SP curves
+    = ((APIHandle *)_curves)->get<CurvesGeom>();
+  assert(curves);
+
+  Buffer::SP vertices_buffer
+    = ((APIHandle *)_vertices)->get<Buffer>();
+  assert(vertices_buffer);
+
+  Buffer::SP widths_buffer
+    = ((APIHandle *)_widths)->get<Buffer>();
+  assert(widths_buffer);
+
+  curves->setVertices({vertices_buffer},{widths_buffer},numControlPoints);
+}
+
+OWL_API void owlCurvesSetSegmentIndices(OWLGeom   _curves,
+                                        int       count,
+                                        OWLBuffer _buffer)
+{
+  LOG_API_CALL();
+    
+  assert(_curves);
+  assert(_buffer);
+
+  CurvesGeom::SP curves
+    = ((APIHandle *)_curves)->get<CurvesGeom>();
+  assert(curves);
+
+  Buffer::SP buffer
+    = ((APIHandle *)_buffer)->get<Buffer>();
+  assert(buffer);
+
+  curves->setSegmentIndices({buffer},count);
+}
+                                       
+OWL_API void owlSpheresSetVertices(OWLGeom _spheres,
+                                       int numSpheres,
+                                       /*! buffer of (one vec3f per
+                                            sphere) that specifies center */
+                                       OWLBuffer _vertices,
+                                       /*! buffer of (one float per
+                                           sphere) specifies radius*/
+                                       OWLBuffer _radii)
+{
+	LOG_API_CALL();
+
+	assert(_spheres);
+	assert(_vertices);
+	assert(_radii);
+
+	SphereGeom::SP spheres
+		= ((APIHandle*)_spheres)->get<SphereGeom>();
+	assert(spheres);
+
+	Buffer::SP vertices_buffer
+		= ((APIHandle*)_vertices)->get<Buffer>();
+	assert(vertices_buffer);
+
+	Buffer::SP radii_buffer
+		= ((APIHandle*)_radii)->get<Buffer>();
+	assert(radii_buffer);
+
+	spheres->setVertices({ vertices_buffer }, { radii_buffer }, numSpheres);
+}

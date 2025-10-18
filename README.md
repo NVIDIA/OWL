@@ -1,10 +1,11 @@
-# OWL: A Productivity Library for Modern OptiX
+# OWL: A Productivity Library for OptiX
 
 <!--- ------------------------------------------------------- -->
 ## What is OWL?
 
 OWL is a convenience/productivity-oriented library on top of OptiX
-7.x and 8.x, and aims at making it easier to write OptiX programs by taking
+(version 7 and newer), and aims at making it easier to write 
+OptiX programs by taking
 some of the more arcane arts (like knowing what a Shader Binding Table
 is, and how to actually build it), and doing that for the user. For
 example, assuming the node graph (ie, the programs, geometries, and
@@ -57,7 +58,7 @@ debug, and maintain.
 
     /* simple sample of setting up a full geometry, BLAS and
 	   IAS for a simple single-triangle mesh model */
-    OWLGroup buildBlasAndIas(max3x4f             &instXfm,
+    OWLGroup buildBlasAndIas(mat3x4f             &instXfm,
 	                         std::vector<float3> &vtx,
 	                         std::vector<int3>   &idx,
 							 float3               color)
@@ -238,14 +239,14 @@ Some sample use projects/papers that recently used OWL:
 # Building OWL / Supported Platforms
 
 General Requirements:
-- OptiX 7 SDK (version 7.x all the work to 8.0 are frequently used and tested)
-- CUDA version 12, preferable 12.2 and newer
+- OptiX. We ship a recent optix.h with OWL, but you still need OptiX in the driver to run it.
+- CUDA version 12 and newer.
 - a C++11 capable compiler (regular gcc on CentOS, Ubuntu, or any other Linux should do; as should VS on Windows)
 - OpenGL
 
-Per-OS Instructions:
+To build OWL locally:
 
-- Ubuntu (mostly developed on 18 and 20, today mostly used on 22 and 24)
+- Ubuntu (mostly developed on 18 and 20, today mostly used on 22, 24, and 25)
     - Required Dependencies (for building just the core library itself)
 		- cmake and general build essentials 
 		
@@ -265,25 +266,29 @@ Per-OS Instructions:
 	cmake ..
 	make
 	```
-- CentOS 7:
-    - Requires: `sudo yum install cmake3`
-	- Build:
-	```bash
-	mkdir build
-	cd build
-	cmake3 ..
-	make
-	```
-	(mind to use `cmake3`, not `cmake`, using the wrong one will mess up the build directory)
 - Windows
     - Requires: Visual Studio (both 2017 and 2019 work), OptiX 7.x to 8.x, cmake
 	- Build: Use CMake-GUI to build Visual Studio project, then use VS to build
 		- Specifics: source code path is ```...Gitlab/owl```, binaries ```...Gitlab/owl/build```, and after pushing the Configure button choose ```x64``` for the optional platform.
 		- You may need to Configure twice.
-		- If you get "OptiX headers (optix.h and friends) not found." then define OptiX_INCLUDE manually in CMake-gui by setting it to ```C:/ProgramData/NVIDIA Corporation/OptiX SDK 7.0.0/include```
+    - To Build from Commandline:
+	```
+    mkdir build
+	cd build
+	cmake .. 
+	cmake --build . --config Release
+	```
+    - To Build and Install:
+	```
+    mkdir build
+	cd build
+	cmake .. -DCMAKE_INSTALL_PREFIX=/WhereEver/local
+	cmake --build . --config Release
+	cmake --install . --config Release
+	```
 
 <!--- ------------------------------------------------------- -->
-# Using OWL through CMake
+# Using OWL through CMake Submodules (Preferred)
 
 Though you can of course use OWL without CMake, it is highly encouraged
 to use OWL as a git submodule, using CMake to configure and build this
@@ -291,8 +296,7 @@ submodule. In particular, the suggested procedure is to first
 do a `add_subdirectory` with the owl submodules as such:
 
 ```cmake
-set(owl_dir ${PROJECT_SOURCE_DIR}/whereeverYourOWLSubmoduleIs)
-add_subdirectory(${owl_dir} EXCLUDE_FROM_ALL)
+add_subdirectory(<whereverYourSubmodulesAre>/owl EXCLUDE_FROM_ALL)
 ```
 
 (the `EXCLUDE_FROM_ALL` makes sure that your main project won't automatically
@@ -312,8 +316,23 @@ If your sample uses the `owlViewer` base class and/or ptx embedding, add those a
 target_link_libraries(myOwlApp PRIVATE myOwlApp-ptx owl::owl owl_viewer)
 ```
 
-OptiX will need to be in a place that can be found by CMake. Point CMake at your
+OptiX will need to be in a place that can be found by CMake. We ship 
+reasonably up to date versions of optix.h with OWL, but you can also
+provide oyur own. To do so, point CMake at your
 OptiX directory by adding it to `CMAKE_PREFIX_PATH` (where it works on all
 platforms similar to how `LD_LIBRARY_PATH` resolves runtime linking on Linux).
 Note that `CMAKE_PREFIX_PATH` can be specified as an environment variable or as
 a CMake variable when you run CMake on your project.
+
+<!--- ------------------------------------------------------- -->
+# Latest Progress/Revision History
+
+Primary Contributors
+====================
+
+- Ingo Wald (University of Utah, NVIDIA)
+- Stefan Zellmann (University of Cologne)
+- Nate Morrical (University of Utah, now NVIDIA)
+- Jeff Amstutz (NVIDIA)
+- Dylan Lacewell (NVIDIA)
+- Eric Haines (NVIDIA)
