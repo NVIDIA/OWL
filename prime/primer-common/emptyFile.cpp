@@ -1,2 +1,5 @@
-/*! a empty c file, to be used to build an empty library if, for
-    example, embree cannot be found */
+// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+
+

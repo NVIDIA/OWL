@@ -1,8 +1,7 @@
-// iw: from 
-// - apoorvaj.io/loading-opengl-without-glew.html
-// - https://github.com/ApoorvaJ/Papaya/blob/3808e39b0f45d4ca4972621c847586e4060c042a/src/libs/gl_lite.h
-// Minor additions (missing pixel buffer stuff)
-// original license below:
+// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+
 /*
 
   gl_lite.h - Single-header multi-platform OpenGL function loader

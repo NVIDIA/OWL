@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+
 #include "CUDADriver.h"
 #ifdef _WIN32
 # include <windows.h>

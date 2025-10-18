@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+
 #define PYOWL_EXPORT_TYPE(Type)                                 \
   __constant__ int __owl_typeDecl__##Type = sizeof(Type);
 
