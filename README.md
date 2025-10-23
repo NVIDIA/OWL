@@ -320,7 +320,13 @@ Note that `CMAKE_PREFIX_PATH` can be specified as an environment variable or as
 a CMake variable when you run CMake on your project.
 
 <!--- ------------------------------------------------------- -->
-# Latest Progress/Revision History
+# Latest Progress/Revision HistoryIf your sample uses the `owlViewer` base class and/or ptx embedding, add those as well:
+
+```cmake
+target_link_libraries(myOwlApp PRIVATE myOwlApp-ptx owl::owl owl_viewer)
+```
+
+
 
 - Oct 2025 - project moved to https://github.com/NVIDIA/owl.git
 
