@@ -185,15 +185,6 @@ target_include_directories(owl-config
     ${PROJECT_SOURCE_DIR}
     ${CMAKE_CURRENT_LIST_DIR}/include
 )
-#set_property(TARGET owl-config
-#  PROPERTY
-#  CUDA_ARCHITECTURES "${OWL_CUDA_ARCHITECTURES}"
-#  CUDA_PTX_COMPILATION ON
-#  CUDA_COMPILE_PTX_COMPILATION OFF
-#  )
-#set_property(TARGET owl_static
-#  PROPERTY CUDA_ARCHITECTURES all-major
-#  )
 
 if (WIN32)
   target_compile_definitions(owl-config INTERFACE -DNOMINMAX)

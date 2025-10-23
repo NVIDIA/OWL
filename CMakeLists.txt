@@ -69,6 +69,11 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/owl/cmake/")
 if (OWL_IS_SUBPROJECT)
   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} PARENT_SCOPE)
+  set(OWL_BUILD_SAMPLES OFF)
+else()
+  # if we're NOT a submodule, we _probably_ want to build the samples,
+  # but give the user a way of turning that off, too:
+  option(OWL_BUILD_SAMPLES "Build the Samples?" ON)
 endif()
 #include(configure_tbb)
 
@@ -78,19 +83,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(embed_ptx)
 include(embed_optixir)
 
+option(OWL_BUILD_SHARED "Build OWL as a shared library? (otherwise static)" OFF)
+set(BUILD_SHARED_LIBS ${OWL_BUILD_SHARED}) # use 'OWL_' naming convention
+
 # ------------------------------------------------------------------
 # owl library itself, including owl-common
 # ------------------------------------------------------------------
-option(OWL_BUILD_SHARED "Build OWL as a shared library? (otherwise static)" OFF)
-set(BUILD_SHARED_LIBS ${OWL_BUILD_SHARED}) # use 'OWL_' naming convention
+
 add_subdirectory(owl)
-
-#add_compile_definitions(OWL_BUILDING_ALL_SAMPLES)
-option(OWL_BUILD_ADVANCED_TESTS "Build the *advanced* test-cases?" OFF)
-
-if (NOT (DEFINED OWL_BUILD_VIEWER))
-  option (OWL_BUILD_VIEWER "Build owlViewer target" ON)
-endif()
 
 add_subdirectory(3rdParty)
 
@@ -104,43 +104,16 @@ add_subdirectory(prime)
 # ------------------------------------------------------------------
 if (OWL_IS_SUBPROJECT)
   # if we ARE a subproject, we ONLY include the samples/common subdir,
-  # and ONLY with exclude from all. This make sure that the owlViewer
-  # target is defined for those projects using owl that need that
-  # library (if it's defined they can link to it, and cmake will then
-  # automatically build it), but at the same time will not actually
-  # build any samples or viewer, and all of the other owl samples will
-  # not even be defined (and thus not pollute the visual studio
-  # targets list)
-  #  add_subdirectory(samples/common/owlViewer EXCLUDE_FROM_ALL)
-else()
-  # if we're NOT a submodule, we _probably_ want to build the samples,
-  # but give the user a way of turning that off, too:
-  option(OWL_BUILD_SAMPLES "Build the Samples?" ON)
-  if (OWL_BUILD_SAMPLES)
-    add_subdirectory(samples)
-  endif()
+  # and ONLY with exclude from all. 
+  return()
 endif()
 
-if (OWL_IS_SUBPROJECT)
-  return()
+if (OWL_BUILD_SAMPLES)
+  add_subdirectory(samples)
 endif()
 
 include(CTest)
 if (BUILD_TESTING)
   enable_testing()
 endif()
-# ------------------------------------------------------------------
-# some basic testing
-# ------------------------------------------------------------------
-if (OWL_BUILD_ADVANCED_TESTS)
-  add_subdirectory(tests)
-endif()
 
-# ------------------------------------------------------------------
-# PyOWL python bindings
-# ------------------------------------------------------------------
-option(OWL_BUILD_PYOWL "Build PyOWL Python Wrappers?" OFF)
-if (OWL_BUILD_PYOWL)
-  add_subdirectory(pyOWL)
-endif()
-    

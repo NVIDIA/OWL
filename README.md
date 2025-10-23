@@ -4,10 +4,10 @@
 ## What is OWL?
 
 OWL is a convenience/productivity-oriented library on top of OptiX
-(version 7 and newer), and aims at making it easier to write 
-OptiX programs by taking
-some of the more arcane arts (like knowing what a Shader Binding Table
-is, and how to actually build it), and doing that for the user. For
+(version 7 and newer), and aims at making it easier to write OptiX
+programs by taking some of the more arcane parts of that job (like
+knowing what a Shader Binding Table is, and how to actually build it),
+and allowing the user to do that in a much, much simpler way. For
 example, assuming the node graph (ie, the programs, geometries, and
 acceleration structures) have already been built, the shader binding
 table (SBT) can be built and properly populated by a single call
@@ -157,7 +157,11 @@ version (like you won't have curves if you use 7.0).
 <!--- ------------------------------------------------------- -->
 # Sample Use Cases
 
-Some sample use projects/papers that recently used OWL:
+## (Not necessarily complete) List of Papers that used OWL
+
+## Links to some Codebases that use OWL
+
+## Other random pointers
 
 - Moana on OWL/OptiX (Oct 2020)
 
@@ -193,11 +197,6 @@ Some sample use projects/papers that recently used OWL:
 
   (http://www.sci.utah.edu/~wald/Publications/2020/dw2/dw2.pdf)
 
-- "Spatial Partitioning Strategies for Memory-Efficient Ray Tracing of
-  Particles".  P Gralka, I Wald, S Geringer, G Reina, Th Ertl. IEEE
-  Symposium on Large Data Analysis and Viusalization (LDAV) 2020.
-
-- "Finding Efficient Spatial Distributions for Massively Instanced 3-d
   Models".  S Zellmann, N Morrical, I Wald, V Pascucci.  Eurographics
   Symposium on Parallel Graphics and Visualization (EGPGV 2020).
 
@@ -239,9 +238,11 @@ Some sample use projects/papers that recently used OWL:
 # Building OWL / Supported Platforms
 
 General Requirements:
-- OptiX. We ship a recent optix.h with OWL, but you still need OptiX in the driver to run it.
+- OptiX. We ship a recent optix.h with OWL, but you still need OptiX
+  in the driver to run it.
 - CUDA version 12 and newer.
-- a C++11 capable compiler (regular gcc on CentOS, Ubuntu, or any other Linux should do; as should VS on Windows)
+- a C++11 capable compiler (regular gcc on CentOS, Ubuntu, or any
+  other Linux should do; as should VS on Windows)
 - OpenGL
 
 To build OWL locally:
@@ -310,12 +311,6 @@ fully use it. This might look like:
 target_link_libraries(myOwlApp PRIVATE owl::owl)
 ```
 
-If your sample uses the `owlViewer` base class and/or ptx embedding, add those as well:
-
-```cmake
-target_link_libraries(myOwlApp PRIVATE myOwlApp-ptx owl::owl owl_viewer)
-```
-
 OptiX will need to be in a place that can be found by CMake. We ship 
 reasonably up to date versions of optix.h with OWL, but you can also
 provide oyur own. To do so, point CMake at your
@@ -327,10 +322,12 @@ a CMake variable when you run CMake on your project.
 <!--- ------------------------------------------------------- -->
 # Latest Progress/Revision History
 
+- Oct 2025 - project moved to https://github.com/NVIDIA/owl.git
+
 Primary Contributors
 ====================
 
-- Ingo Wald (University of Utah, NVIDIA)
+- Ingo Wald (NVIDIA, University of Utah)
 - Stefan Zellmann (University of Cologne)
 - Nate Morrical (University of Utah, now NVIDIA)
 - Jeff Amstutz (NVIDIA)
