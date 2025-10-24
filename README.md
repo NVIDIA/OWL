@@ -36,7 +36,7 @@ low-level steps themselves; ie, those that are willing to trade a bit
 of low-level control (and *maybe* some tiny amount of performance) for
 higher developing productivity.
 
-## Simple Example
+## A Simple OWL Example
 
 As an example of how easy it is to use OWL to build OptiX data
 strucutres, the following example code snippet takes a host-based
@@ -99,7 +99,7 @@ create frame buffer and launch data, build the programs
 (`owlBuildPrograms()`), the pipline (`owlBuildPipeline()`), and the
 SBT (`owlBuildSBT(ctx)`), etc.
 
-## What about Advanced Users?
+## OWL Features 
 
 As stated above, OWL explicitly aims for helping entry-level or casual
 RTX users get started, and get working productively with OptiX and RTX
@@ -148,20 +148,109 @@ help users build and populate the SBT - which needs more "global"
 information than a single acceleration structure.
 
 Despite these significant changes after the initial release, the
-current abstraction level and API have remained stable over roughly a
-year now, with only relatively minor additions such as buffers of
-buffers, refitting, textures, or motion blur. Some capabilities will
-only be available when used with the respective OptiX and/or driver
-version (like you won't have curves if you use 7.0).
+current abstraction level and API have remained stable over a pretty
+long period, now, with only relatively minor additions such as adding
+newly supported OptiX features that weren't available when OWL was
+first created. Some capabilities will only be available when used with
+the respective OptiX and/or driver version (like you won't have curves
+if you use 7.0).
+
+<!--- ------------------------------------------------------- -->
+# Building OWL / Supported Platforms
+
+General Requirements:
+- OptiX. We ship a recent optix.h with OWL, but you still need OptiX
+  in the driver to run it.
+- CUDA version 12 and newer.
+- a C++11 capable compiler (regular gcc on CentOS, Ubuntu, or any
+  other Linux should do; as should VS on Windows)
+- OpenGL
+
+To build OWL locally:
+
+- Ubuntu (OWL was originally developed on 18 and 20, but today is
+  mostly used on 22-25)
+    - Required Dependencies: cmake and general build essentials
+		
+        sudo apt install cmake cmake-curses-gui build-essential
+	
+	- Build:
+	```bash
+	mkdir build
+	cd build
+	cmake ..
+	make
+	```
+- Windows
+    - Requires: Visual Studio (both 2017 and 2019 work), OptiX 7.x to 8.x, cmake
+	- Build: Use CMake-GUI to build Visual Studio project, then use VS to build
+		- Specifics: source code path is ```...Gitlab/owl```, binaries ```...Gitlab/owl/build```, and after pushing the Configure button choose ```x64``` for the optional platform.
+		- You may need to Configure twice.
+    - To Build from Commandline:
+	```
+    mkdir build
+	cd build
+	cmake .. 
+	cmake --build . --config Release
+	```
+    - To Build and Install:
+	```
+    mkdir build
+	cd build
+	cmake .. -DCMAKE_INSTALL_PREFIX=/WhereEver/local
+	cmake --build . --config Release
+	cmake --install . --config Release
+	```
+
+<!--- ------------------------------------------------------- -->
+# Using OWL through CMake Submodules (Preferred)
+
+Though you can of course use OWL without CMake, it is highly encouraged
+to use OWL as a git submodule, using CMake to configure and build this
+submodule. In particular, the suggested procedure is to first
+do a `add_subdirectory` with the owl submodules as such:
+
+```cmake
+add_subdirectory(<whereverYourSubmodulesAre>/owl EXCLUDE_FROM_ALL)
+```
+
+(the `EXCLUDE_FROM_ALL` makes sure that your main project won't automatically
+build any owl samples or test cases unless you explicitly request so).
+
+Once your project has called `add_subdirectory` on owl, it only has to link the
+`owl::owl` target in order to bring in all includes, linked libraries, etc. to
+fully use it. This might look like:
+
+```cmake
+target_link_libraries(myOwlApp PRIVATE owl::owl)
+```
+
+OptiX will need to be in a place that can be found by CMake. We ship 
+reasonably up to date versions of optix.h with OWL, but you can also
+provide oyur own. To do so, point CMake at your
+OptiX directory by adding it to `CMAKE_PREFIX_PATH` (where it works on all
+platforms similar to how `LD_LIBRARY_PATH` resolves runtime linking on Linux).
+Note that `CMAKE_PREFIX_PATH` can be specified as an environment variable or as
+a CMake variable when you run CMake on your project.
+
+
+
+<!--- ------------------------------------------------------- -->
+# Samples
+
+OWL comes with some simple cmdline-only samples (that don't need any
+external dependencies for creating windows etc) in its https://samples
+directory. For some more advanced samples - with interactive rendering
+and user interaction in some interactive viewer windows - please also
+have a look at https://github.com/owl-project/owl_advanced_samples .
 
 <!--- ------------------------------------------------------- -->
 # Sample Use Cases
 
-## (Not necessarily complete) List of Papers that used OWL
-
-## Links to some Codebases that use OWL
-
-## Other random pointers
+- "barney" - A Multi-GPU (and optionally Multi-Node) ANARI Path Tracer
+  for large data.
+  
+  https://github.com/ingowald/barney
 
 - Moana on OWL/OptiX (Oct 2020)
 
@@ -235,98 +324,150 @@ version (like you won't have curves if you use 7.0).
 
 
 <!--- ------------------------------------------------------- -->
-# Building OWL / Supported Platforms
+# Some Papers (that we know of) that used OWL
 
-General Requirements:
-- OptiX. We ship a recent optix.h with OWL, but you still need OptiX
-  in the driver to run it.
-- CUDA version 12 and newer.
-- a C++11 capable compiler (regular gcc on CentOS, Ubuntu, or any
-  other Linux should do; as should VS on Windows)
-- OpenGL
+- Visualization of Large Non-Trivially Partitioned Unstructured Data
+  With Native Distribution on High-Performance Computing
+  Systems. Alper Sahistan; Serkan Demirci; Ingo Wald; Stefan Zellmann;
+  João Barbosa; Nate Morrical; Uğur Güdükbay. IEEE Transactions on
+  Visualization and Computer Graphics, Volume 31, Issue 9, 2024
 
-To build OWL locally:
+- Data Parallel Multi-GPU Path Tracing using Ray Queue Cycling. Ingo
+  Wald, Milan Jaroš, Stefan Zellmann. Computer Graphics Forum, Volume
+  42, Issue 8.
 
-- Ubuntu (mostly developed on 18 and 20, today mostly used on 22, 24, and 25)
-    - Required Dependencies (for building just the core library itself)
-		- cmake and general build essentials 
-		
-        sudo apt install cmake cmake-curses-gui build-essential
-	
-	- Optional but recommended dependencies:
-	  - for the graphical exampels: 
-	
-            sudo apt-get install libglfw3-dev
-			
-	  - TBB for parallelism
-		
-	- Build:
-	```bash
-	mkdir build
-	cd build
-	cmake ..
-	make
-	```
-- Windows
-    - Requires: Visual Studio (both 2017 and 2019 work), OptiX 7.x to 8.x, cmake
-	- Build: Use CMake-GUI to build Visual Studio project, then use VS to build
-		- Specifics: source code path is ```...Gitlab/owl```, binaries ```...Gitlab/owl/build```, and after pushing the Configure button choose ```x64``` for the optional platform.
-		- You may need to Configure twice.
-    - To Build from Commandline:
-	```
-    mkdir build
-	cd build
-	cmake .. 
-	cmake --build . --config Release
-	```
-    - To Build and Install:
-	```
-    mkdir build
-	cd build
-	cmake .. -DCMAKE_INSTALL_PREFIX=/WhereEver/local
-	cmake --build . --config Release
-	cmake --install . --config Release
-	```
+- Beyond ExaBricks: GPU Volume Path Tracing of AMR Data. Stefan
+  Zellmann, Qi Wu, Alper Sahistan, Kwan-Liu Ma, Ingo Wald. Computer
+  Graphics Forum. Volume 43, Issue 3, 2024
+
+- Memory-Efficient GPU Volume Path Tracing of AMR Data Using the Dual
+  Mesh. Stefan Zellmann, Qi Wu, Kwan-Liu Ma, and Ingo Wald. Computer
+  Graphics Forum (Proceedings of EuroVis 2023). 2023.
+
+- Data Parallel Path Tracing with Object Hierarchies. I Wald and S
+  Parker. Proceedings of the ACM on Computer Graphics and Interactive
+  Techniques (Proceedings of High Performance Graphics), 2022
+
+
+- Quick Clusters - A GPU-Parallel Partitioning for Efficient Path
+  Tracing of Unstructured Volumetric Grids. N Morrical, A Sahistan, U
+  Gudukbay, I Wald, and V Pascucci. IEEE Transactions on Visualization
+  and Computer Graphics (Proceedings of IEEE Vis 2022).
+
+- Point Containment Queries on Ray Tracing Cores for AMR Flow
+  Visualization. S Zellmann, D Seifried, N Morrical, I Wald, W Usher,
+  JAP Law-Smith, S Walch-Glassner, and A Hinkenjann. CiSE Special
+  Issue. Computing in Science and Engineering, 2021. Also available on
+  arXiv:2202.12020
+
+- A GPU-accelerated particle tracking method for Eulerian–Lagrangian
+  simulations using hardware ray tracing cores. Bin Wang, Ingo Wald,
+  Nate Morrical, Will Usher, Lin Mu, Karsten Thompson, Richard
+  Hughes. Computer Physics Communications 271(1), 2021
+
+- A Memory Efficient Encoding for Ray Tracing Large Unstructured
+  Data. Ingo Wald, Nate Morrical, and Stefan Zellmann. IEEE
+  Transactions of Visualization and Computer Graphics 28(1),
+  (Proceedings of IEEE Visualization 2021), 2022.
+
+- Multi-level tetrahedralization based accelerator for ray-tracing
+  animated scenes. Aytek Aman, Serkan Dimirci, Ugur Gudukbay, and Ingo
+  Wald; Computer Animation and Virtual Worlds, 2021
+
+- Accelerating Unstructured Mesh Point Location with RT Cores. Nathan
+  Morrical, Ingo Wald, Will Usher, and Valerio Pascucci. IEEE
+  Transactions on Visualization and Computer Graphics (TVCG), 2020.
+
+- Ray Tracing Structured AMR Data using Exabricks. Ingo Wald, Stefan
+  Zellmann, Will Usher, Nate Morrical, Ulrich Lang, and Valerio
+  Pascucci. IEEE Transactions on Visualization and Computer Graphics
+  (Proceedings of IEEE VIs 2020), 2021
+
+- Using Hardware Ray Transforms to Accelerate Ray/Primitive
+  Intersections for Long, Thin Primitive Types. Ingo Wald, Nate
+  Morrical, Stefan Zellmann, Lei Ma, Will Usher, Tiejun Huang, Valerio
+  Pascucci. Proceedings of the ACM on Computer Graphics and
+  Interactive Techniques (Proceedings of High Performance Graphics),
+  2020.
+
+- GPU Volume Rendering with Hierarchical Compression using VDB. Stefan
+  Zellmann; Milan Jaroš; Jefferson Amstutz; Ingo Wald. Eurographics
+  EGPGV2025 Eurographics Symposium on Parallel Graphics and
+  Visualization. 2025.
+
+- Multi-Density Woodcock Tracking: Efficient \& High-Quality Rendering
+  for Multi-Channel Volumes. Alper Sahistan, Stefan Zellmann, Nate
+  Morrical, Valerio Pascucci, Ingo Wald.
+
+- Standardized Data-Parallel Rendering Using ANARI. Ingo Wald, Stefan
+  Zellmann, Jefferson Amstutz, Qi Wu, Kevin Griffin, Milan Jaros,
+  Stefan Wesner. 2024 IEEE 14th Symposium on Large Data Analysis and
+  Visualization (LDAV). 2024
+
+- Hybrid Image-/Data-Parallel Rendering using Island Parallelism. S
+  Zellmann, I Wald, J Barbosa, S Demirci, A Sahistan, and U
+  Gudukbay. In Proceedings of IEEE Symposium of the IEEE Large Data
+  Analysis and Visualization symposium. 2022.
+
+- Design and Evaluation of a GPU Streaming Framework for Visualizing
+  Time-Varying AMR Data. S Zellmann, I Wald, A Sahistan, M Hellmann,
+  and W Usher. Eurographics Symposium on Parallel Graphics and
+  Visualization. 2022.
+
+- Ray Traced Shell Traversal of Tetrahedral Meshes for Direct Volume
+  Visualization. A Sahistan, S Demirci, N Morrical, S Zellmann, A
+  Aman, I Wald, and U Gudukbay. IEEE Visualization Short Papers, 2021.
+
+- Faster RTX-Accelerated Empty Space Skipping using Triangulated
+  Active Region Boundary Geometry. Ingo Wald, Nate Morrical, and
+  Stefan Zellmann. EGPGV 2021.
+
+- Spatial Partitioning Strategies for Memory-Efficient Ray Tracing of
+  Particles. Patrick Gralka, Ingo Wald, Sergej Geringer, Guido Reina,
+  and Thomas Ertl. 2020 IEEE 10th Symposium on Large Data Analysis and
+  Visualization.
+
+- ospDisplayWall: A Virtual Frame Buffer Abstraction for Parallel
+  Rendering of Large Tiled Display Walls. Ingo Wald, Mengjiao Han,
+  Will Usher, Christopher R Johnson, and Valerio Pascucci. IEEE
+  Visualization (Short Papers). 2020.
+  
+- Accelerating Force-Directed Graph Drawing with RT Cores. Stefan
+  Zellmann, Martin Weier, and Ingo Wald. IEEE Visualization (Short
+  Papers). 2020.
+
+- High-Quality Rendering of Glyphs Using Hardware Accelerated Ray
+  Tracing. Stefan Zellmann, Martin Aumueller, Nathan Marshak, and Ingo
+  Wald. Accepted at Eurographics Parallel Graphics and Visualization
+  (EGPGV) 2020 Short Papers, 2020.
+
+- Finding Efficient Spatial Distributions for Massively Instanced 3-d
+  Models. Stefan Zellmann, Nate Morrical, Ingo Wald, and Valerio
+  Pascucci. Accepted at Eurographics Parallel Graphics and
+  Visualization (EGPGV) 2020.
+
+
+- Efficient Space Skipping and Adaptive Sampling of Unstructured
+  Volumes using Hardware Accelerated Ray Tracing. Nate Morrical, Will
+  Usher, Ingo Wald, and Valerio Pascucci. In IEEE Visualization Short
+  Papers. 2019.
+
+- RTX Beyond Ray Tracing - Evaluating the use of Hardware Ray Tracing
+  Cores for Tet-Mesh Point Location. Ingo Wald, Will Usher, Nate
+  Morrical, Laura Lediaev, and Valerio Pascucci. In High Performance
+  Graphics 2019.
+
+- NVisII: A Scriptable Tool for Photorealistic Image
+  Generation. Nathan Morrical, Jonathan Tremblay, Yunzhi Lin, Stephen
+  Tyree, Stan Birchfield, Valerio Pascucci, and Ingo
+  Wald. arXiv:2105.13962
+
+
+If you have any additional papers you know of that used OWL, please
+let us know and/or send a PR that adds that paper to this README.
 
 <!--- ------------------------------------------------------- -->
-# Using OWL through CMake Submodules (Preferred)
-
-Though you can of course use OWL without CMake, it is highly encouraged
-to use OWL as a git submodule, using CMake to configure and build this
-submodule. In particular, the suggested procedure is to first
-do a `add_subdirectory` with the owl submodules as such:
-
-```cmake
-add_subdirectory(<whereverYourSubmodulesAre>/owl EXCLUDE_FROM_ALL)
-```
-
-(the `EXCLUDE_FROM_ALL` makes sure that your main project won't automatically
-build any owl samples or test cases unless you explicitly request so).
-
-Once your project has called `add_subdirectory` on owl, it only has to link the
-`owl::owl` target in order to bring in all includes, linked libraries, etc. to
-fully use it. This might look like:
-
-```cmake
-target_link_libraries(myOwlApp PRIVATE owl::owl)
-```
-
-OptiX will need to be in a place that can be found by CMake. We ship 
-reasonably up to date versions of optix.h with OWL, but you can also
-provide oyur own. To do so, point CMake at your
-OptiX directory by adding it to `CMAKE_PREFIX_PATH` (where it works on all
-platforms similar to how `LD_LIBRARY_PATH` resolves runtime linking on Linux).
-Note that `CMAKE_PREFIX_PATH` can be specified as an environment variable or as
-a CMake variable when you run CMake on your project.
-
-<!--- ------------------------------------------------------- -->
-# Latest Progress/Revision HistoryIf your sample uses the `owlViewer` base class and/or ptx embedding, add those as well:
-
-```cmake
-target_link_libraries(myOwlApp PRIVATE myOwlApp-ptx owl::owl owl_viewer)
-```
-
-
+# Latest Progress/Revision History
 
 - Oct 2025 - project moved to https://github.com/NVIDIA/owl.git
 
