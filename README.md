@@ -36,7 +36,7 @@ low-level steps themselves; ie, those that are willing to trade a bit
 of low-level control (and *maybe* some tiny amount of performance) for
 higher developing productivity.
 
-## Simple Example
+## A Simple OWL Example
 
 As an example of how easy it is to use OWL to build OptiX data
 strucutres, the following example code snippet takes a host-based
@@ -99,7 +99,7 @@ create frame buffer and launch data, build the programs
 (`owlBuildPrograms()`), the pipline (`owlBuildPipeline()`), and the
 SBT (`owlBuildSBT(ctx)`), etc.
 
-## What about Advanced Users?
+## OWL Features 
 
 As stated above, OWL explicitly aims for helping entry-level or casual
 RTX users get started, and get working productively with OptiX and RTX
@@ -148,11 +148,12 @@ help users build and populate the SBT - which needs more "global"
 information than a single acceleration structure.
 
 Despite these significant changes after the initial release, the
-current abstraction level and API have remained stable over roughly a
-year now, with only relatively minor additions such as buffers of
-buffers, refitting, textures, or motion blur. Some capabilities will
-only be available when used with the respective OptiX and/or driver
-version (like you won't have curves if you use 7.0).
+current abstraction level and API have remained stable over a pretty
+long period, now, with only relatively minor additions such as adding
+newly supported OptiX features that weren't available when OWL was
+first created. Some capabilities will only be available when used with
+the respective OptiX and/or driver version (like you won't have curves
+if you use 7.0).
 
 <!--- ------------------------------------------------------- -->
 # Building OWL / Supported Platforms
@@ -167,19 +168,12 @@ General Requirements:
 
 To build OWL locally:
 
-- Ubuntu (mostly developed on 18 and 20, today mostly used on 22, 24, and 25)
-    - Required Dependencies (for building just the core library itself)
-		- cmake and general build essentials 
+- Ubuntu (OWL was originally developed on 18 and 20, but today is
+  mostly used on 22-25)
+    - Required Dependencies: cmake and general build essentials
 		
         sudo apt install cmake cmake-curses-gui build-essential
 	
-	- Optional but recommended dependencies:
-	  - for the graphical exampels: 
-	
-            sudo apt-get install libglfw3-dev
-			
-	  - TBB for parallelism
-		
 	- Build:
 	```bash
 	mkdir build
