@@ -1,15 +1,16 @@
 name: Ubuntu
 
-on:
-  workflow_dispatch:
+#on:
+#  workflow_dispatch:
 
-#  push:
-#    paths:
-#      - "**"
-#      - "!.github/**"
-#      - ".github/workflows/Ubuntu.yml"
-#      - ".github/action-scripts/install_cuda_ubuntu.sh"
-#      - "!*.md"
+on:
+  push:
+    paths:
+      - "**"
+      - "!.github/**"
+      - ".github/workflows/Ubuntu.yml"
+      - ".github/action-scripts/install_cuda_ubuntu.sh"
+      - "!*.md"
 
 jobs:
   build:
