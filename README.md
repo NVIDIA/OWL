@@ -1,5 +1,9 @@
 # OWL: A Productivity Library for OptiX
 
+Build Status:
+[![Windows](https://github.com/ingowald/barney/actions/workflows/Windows.yml/badge.svg)](https://github.com/ingowald/barney/actions/workflows/Windows.yml) 
+[![Ubuntu](https://github.com/ingowald/barney/actions/workflows/Ubuntu.yml/badge.svg)](https://github.com/ingowald/barney/actions/workflows/Ubuntu.yml)
+
 <!--- ------------------------------------------------------- -->
 ## What is OWL?
 
