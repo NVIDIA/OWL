@@ -27,7 +27,7 @@ jobs:
             cmake-platform-flag: "-A x64"
             config: Release
           - os: windows-2022
-            cuda: "13.0.0"
+            cuda: "13.0.2"
             visual-studio: "Visual Studio 17 2022"
             shell: "powershell"
             cmake-platform-flag: "-A x64"
@@ -39,7 +39,7 @@ jobs:
             cmake-platform-flag: "-A x64"
             config: Release
           - os: windows-2025
-            cuda: "13.0.0"
+            cuda: "13.0.2"
             visual-studio: "Visual Studio 17 2022"
             shell: "powershell"
             cmake-platform-flag: "-A x64"
