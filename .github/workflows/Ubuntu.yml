@@ -29,10 +29,6 @@ jobs:
             gcc: 13
             config: Debug
           - os: ubuntu-24.04
-            cuda: "none"
-            gcc: 13
-            config: Release
-          - os: ubuntu-24.04
             cuda: "13.0"
             gcc: 13
             config: Release

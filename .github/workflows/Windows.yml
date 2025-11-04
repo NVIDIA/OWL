@@ -44,12 +44,6 @@ jobs:
             shell: "powershell"
             cmake-platform-flag: "-A x64"
             config: Release
-          - os: windows-2025
-            cuda: "none"
-            visual-studio: "Visual Studio 17 2022"
-            shell: "powershell"
-            cmake-platform-flag: "-A x64"
-            config: Release
 
     env:
       cmake_generator: "${{ matrix.visual-studio }}"
