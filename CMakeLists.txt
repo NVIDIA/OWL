@@ -33,9 +33,12 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # project command is required to come after cmake_minimum_required command.
 set(OWL_VERSION ${OWL_VERSION_MAJOR}.${OWL_VERSION_MINOR}.${OWL_VERSION_PATCH})
-project(Barney VERSION ${OWL_VERSION} LANGUAGES C CXX CUDA)
+project(OWL VERSION ${OWL_VERSION} LANGUAGES C CXX)
+#project(OWL VERSION ${OWL_VERSION} LANGUAGES C CXX CUDA)
 include(GNUInstallDirs)
 
+message("ENABLING CUDA")
+enable_language(CUDA)
 #project(Optix-OWL VERSION 1.1.7 LANGUAGES C CXX CUDA)
 #if ((${CMAKE_VERSION} VERSION_LESS 3.24)
 #    AND
