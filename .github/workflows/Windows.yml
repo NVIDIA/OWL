@@ -62,12 +62,6 @@ jobs:
         run: .github\action-scripts\install-cuda-windows.ps1
         shell: powershell
 
-      - name: Checkout ANARI-SDK
-        uses: actions/checkout@v5
-        with:
-          repository: "KhronosGroup/ANARI-SDK"
-          path: ${{github.workspace}}/anari_sdk
-
       - name: cmake configure
         run: |
           mkdir ${{github.workspace}}/build
