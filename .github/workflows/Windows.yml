@@ -37,13 +37,18 @@ jobs:
             visual-studio: "Visual Studio 17 2022"
             shell: "powershell"
             config: Release
+          - os: windows-2025
+            cuda: "13.0.2"
+            visual-studio: "Visual Studio 17 2022"
+            shell: "powershell"
+            config: Release
 
     env:
       cmake_generator: "${{ matrix.visual-studio }}"
       visual_studio: "${{ matrix.visual-studio }}"
       build_dir: "build"
     steps:
-      - name: Checkout barney
+      - name: Checkout owl
         uses: actions/checkout@v5
         with:
           submodules: true
@@ -62,11 +67,15 @@ jobs:
         run: .github\action-scripts\install-cuda-windows.ps1
         shell: powershell
 
+      - name: create shared install dir
+        run: |
+          mkdir ${{github.workspace}}\install
+
       - name: cmake configure
         run: |
           mkdir ${{github.workspace}}\build
           cd ${{github.workspace}}\build
-          cmake .. -DCMAKE_INSTALL_PREFIX=${{github.workspace}}\install ${{ matrix.build_flags }} -A x64 -G "${{ matrix.visual-studio }}"
+          cmake  -A x64 -G "${{ matrix.visual-studio }}" .. -DCMAKE_INSTALL_PREFIX=${{github.workspace}}\install
 
       - name: cmake build
         run: |
