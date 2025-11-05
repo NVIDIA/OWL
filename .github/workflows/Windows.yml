@@ -21,25 +21,21 @@ jobs:
             cuda: "12.6.2"
             visual-studio: "Visual Studio 17 2022"
             shell: "powershell"
-            cmake-platform-flag: "-A x64"
             config: Release
           - os: windows-2022
             cuda: "13.0.2"
             visual-studio: "Visual Studio 17 2022"
             shell: "powershell"
-            cmake-platform-flag: "-A x64"
             config: Release
           - os: windows-2025
             cuda: "12.6.2"
             visual-studio: "Visual Studio 17 2022"
             shell: "powershell"
-            cmake-platform-flag: "-A x64"
             config: Release
           - os: windows-2025
             cuda: "13.0.2"
             visual-studio: "Visual Studio 17 2022"
             shell: "powershell"
-            cmake-platform-flag: "-A x64"
             config: Release
 
     env:
@@ -76,7 +72,7 @@ jobs:
         run: |
           mkdir ${{github.workspace}}/build
           cd ${{github.workspace}}/build
-          cmake .. -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/install ${{ matrix.build_flags }} -DCMAKE_BUILD_TYPE=${{matrix.config}}
+          cmake .. -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/install ${{ matrix.build_flags }} -A x64 -G "${{ matrix.visual-studio }}"
 
       - name: cmake build
         run: |
