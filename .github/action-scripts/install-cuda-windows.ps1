@@ -132,6 +132,18 @@ if([version]$CUDA_VERSION_FULL -ge [version]"12.4") {
     $CUDA_PACKAGES_IN += "nvfatbin"
 }
 
+if([version]$CUDA_VERSION_FULL -ge [version]"13.0") {
+    $CUDA_PACKAGES_IN += "thrust"
+    $CUDA_PACKAGES_IN += "nvptxcompiler"
+    $CUDA_PACKAGES_IN += "nvvm"
+    $CUDA_PACKAGES_IN += "nvtx"
+    $CUDA_PACKAGES_IN += "nvrtc"
+    $CUDA_PACKAGES_IN += "nvrtc_dev"
+    $CUDA_PACKAGES_IN += "nvml_dev"
+    $CUDA_PACKAGES_IN += "npp"
+    $CUDA_PACKAGES_IN += "npp_dev"
+}
+
 Foreach ($package in $CUDA_PACKAGES_IN) {
     # Make sure the correct package name is used for nvcc.
     if($package -eq "cuda_profiler_api" -and [version]$CUDA_VERSION_FULL -lt [version]"11.8"){
@@ -184,10 +196,8 @@ if(Test-Path -Path $CUDA_REPO_PKG_LOCAL){
 }
 
 # Invoke silent install of CUDA (via network installer)
-#Write-Output "Installing CUDA $($CUDA_VERSION_FULL). Subpackages $($CUDA_PACKAGES)"
-Write-Output "Installing CUDA $($CUDA_VERSION_FULL). Subpackages all
-#Start-Process -Wait -FilePath .\"$($CUDA_REPO_PKG_LOCAL)" -ArgumentList "-s $($CUDA_PACKAGES)"
-Start-Process -Wait -FilePath .\"$($CUDA_REPO_PKG_LOCAL)" -ArgumentList "-s 
+Write-Output "Installing CUDA $($CUDA_VERSION_FULL). Subpackages $($CUDA_PACKAGES)"
+Start-Process -Wait -FilePath .\"$($CUDA_REPO_PKG_LOCAL)" -ArgumentList "-s $($CUDA_PACKAGES)"
 
 # Check the return status of the CUDA installer.
 if (!$?) {
