@@ -76,6 +76,7 @@ jobs:
           mkdir ${{github.workspace}}\build
           cd ${{github.workspace}}\build
           cmake  -A x64 -G "${{ matrix.visual-studio }}" .. -DCMAKE_INSTALL_PREFIX=${{github.workspace}}\install
+        shell: powershell
 
       - name: cmake build
         run: |
