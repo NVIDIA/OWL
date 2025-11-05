@@ -5,12 +5,9 @@ name: Ubuntu
 
 on:
   push:
-    paths:
-      - "**"
-      - "!.github/**"
-      - ".github/workflows/Ubuntu.yml"
-      - ".github/action-scripts/install_cuda_ubuntu.sh"
-      - "!*.md"
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
