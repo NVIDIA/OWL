@@ -23,7 +23,7 @@ jobs:
             shell: "powershell"
             config: Release
           - os: windows-2022
-            cuda: "13.0.2"
+            cuda: "13.0.0"
             visual-studio: "Visual Studio 17 2022"
             shell: "powershell"
             config: Release
@@ -33,7 +33,7 @@ jobs:
             shell: "powershell"
             config: Release
           - os: windows-2025
-            cuda: "13.0.2"
+            cuda: "13.0.0"
             visual-studio: "Visual Studio 17 2022"
             shell: "powershell"
             config: Release
