@@ -64,16 +64,16 @@ jobs:
 
       - name: cmake configure
         run: |
-          mkdir ${{github.workspace}}/build
-          cd ${{github.workspace}}/build
-          cmake .. -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/install ${{ matrix.build_flags }} -A x64 -G "${{ matrix.visual-studio }}"
+          mkdir ${{github.workspace}}\build
+          cd ${{github.workspace}}\build
+          cmake .. -DCMAKE_INSTALL_PREFIX=${{github.workspace}}\install ${{ matrix.build_flags }} -A x64 -G "${{ matrix.visual-studio }}"
 
       - name: cmake build
         run: |
-          cd ${{github.workspace}}/build
+          cd ${{github.workspace}}\build
           cmake --build . --config ${{ matrix.config }}
 
       - name: cmake install
         run: |
-          cd ${{github.workspace}}/build
+          cd ${{github.workspace}}\build
           cmake --install .  --config ${{ matrix.config }}
