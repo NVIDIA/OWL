@@ -185,6 +185,7 @@ if(Test-Path -Path $CUDA_REPO_PKG_LOCAL){
 
 # Invoke silent install of CUDA (via network installer)
 Write-Output "Installing CUDA $($CUDA_VERSION_FULL). Subpackages $($CUDA_PACKAGES)"
+#Start-Process -Wait -FilePath .\"$($CUDA_REPO_PKG_LOCAL)" -ArgumentList "-s $($CUDA_PACKAGES)"
 Start-Process -Wait -FilePath .\"$($CUDA_REPO_PKG_LOCAL)" -ArgumentList "-s $($CUDA_PACKAGES)"
 
 # Check the return status of the CUDA installer.
