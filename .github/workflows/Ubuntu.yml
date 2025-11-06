@@ -52,10 +52,16 @@ jobs:
           submodules: true
 
       - name: Install CUDA
-        env:
+        uses: Jimver/cuda-toolkit@master
+        id: cuda-toolkit
+        with:
           cuda: ${{ matrix.cuda }}
-        run: ./.github/action-scripts/install_cuda_ubuntu.sh
-        shell: bash
+
+#      - name: Install CUDA
+#        env:
+#          cuda: ${{ matrix.cuda }}
+#        run: ./.github/action-scripts/install_cuda_ubuntu.sh
+#        shell: bash
 
       # Specify the correct host compilers
       - name: Install/Select gcc and g++
