@@ -110,3 +110,68 @@ if (BUILD_TESTING)
   enable_testing()
 endif()
 
+
+
+# ------------------------------------------------------------------
+# cmake install stuff
+# ------------------------------------------------------------------
+
+set(OWL_CMAKE_INSTALL_DESTINATION
+  ${CMAKE_INSTALL_LIBDIR}/cmake/owl-${OWL_VERSION}
+)
+
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(
+  "${PROJECT_SOURCE_DIR}/owl/cmake/owlConfig.cmake.in"
+  "${PROJECT_BINARY_DIR}/owlConfig.cmake"
+  INSTALL_DESTINATION
+  ${OWL_CMAKE_INSTALL_DESTINATION}
+)
+
+write_basic_package_version_file(
+    "owlConfigVersion.cmake"
+    VERSION ${OWL_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/owlConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/owlConfigVersion.cmake
+  DESTINATION
+  ${OWL_CMAKE_INSTALL_DESTINATION}
+  )
+
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/cmake
+  DESTINATION
+    ${OWL_CMAKE_INSTALL_DESTINATION}
+  FILES_MATCHING
+    PATTERN *.cmake
+    PATTERN Findowl.cmake EXCLUDE
+)
+
+set(OWL_INSTALL_TARGETS owl owl_static)
+
+install(
+  TARGETS
+  ${OWL_INSTALL_TARGETS}
+  EXPORT owl-config
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  NAMELINK_SKIP
+  # on Windows put the dlls into bin
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  # ... and the import lib into the devel package
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+install(EXPORT owl-config
+  DESTINATION ${OWL_CMAKE_INSTALL_DESTINATION}
+  NAMESPACE owl::
+  )
+
+install(
+#  DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/owl
+  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/owl
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}
+  )
+
+
