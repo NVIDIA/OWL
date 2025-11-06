@@ -3,10 +3,10 @@
 
 
 set(OWL_VERSION_MAJOR 1)
-set(OWL_VERSION_MINOR 0)
+set(OWL_VERSION_MINOR 2)
 set(OWL_VERSION_PATCH 0)
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.24)
 
 set(CMAKE_CUDA_USE_STATIC_CUDA_RUNTIME ON)
 
@@ -33,24 +33,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # project command is required to come after cmake_minimum_required command.
 set(OWL_VERSION ${OWL_VERSION_MAJOR}.${OWL_VERSION_MINOR}.${OWL_VERSION_PATCH})
-project(OWL VERSION ${OWL_VERSION} LANGUAGES C CXX)
-#project(OWL VERSION ${OWL_VERSION} LANGUAGES C CXX CUDA)
+project(OWL VERSION ${OWL_VERSION} LANGUAGES C CXX CUDA)
 include(GNUInstallDirs)
-
-message("CMAKE_CXX_COMPILER ${CMAKE_CXX_COMPILER}")
-message("CHECKING LANGUAGE CUDA")
-include(CheckLanguage)
-message("CALLING CHECKLANGUAGE CUDA")
-check_language(CUDA)
-message("CMAKE_CUDA_COMPILER ${CMAKE_CUDA_COMPILER}")
-message("ENABLING CUDA")
-enable_language(CUDA)
-#project(Optix-OWL VERSION 1.1.7 LANGUAGES C CXX CUDA)
-#if ((${CMAKE_VERSION} VERSION_LESS 3.24)
-#    AND
-#    ("${CMAKE_CUDA_ARCHITECTURES}" STREQUAL 52))
-#  set(CMAKE_CUDA_ARCHITECTURES OFF)
-#endif()
 
 if (NOT CMAKE_CUDA_ARCHITECTURES)
   # 'all-major', since cmake-3.24
