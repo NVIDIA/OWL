@@ -1,12 +1,23 @@
 # SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-cmake_minimum_required(VERSION 3.12)
+
+set(OWL_VERSION_MAJOR 1)
+set(OWL_VERSION_MINOR 2)
+set(OWL_VERSION_PATCH 0)
+
+cmake_minimum_required(VERSION 3.24)
+
+set(CMAKE_CUDA_USE_STATIC_CUDA_RUNTIME ON)
 
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.18)
   cmake_policy(SET CMP0104 NEW)
 endif()
+cmake_policy(SET CMP0079 NEW)
 cmake_policy(SET CMP0076 NEW)
+cmake_policy(SET CMP0063 NEW)
+
+
 
 if (NOT (${CMAKE_CURRENT_SOURCE_DIR} STREQUAL ${CMAKE_SOURCE_DIR}))
   set(OWL_IS_SUBPROJECT ON)
@@ -14,34 +25,16 @@ else()
   set(OWL_IS_SUBPROJECT OFF)
 endif()
 
-if(CUDA_TOOLKIT_ROOT_DIR)
-  # Somebody called find_cuda--they are trying to use the deprecated build.
-  message(WARNING "CUDA_TOOLKIT_ROOT_DIR is set. "
-    "This usually means that a parent project has called find_cuda, which "
-    "has been deprecated in CMake since 2018 and is no longer supported by OWL. "
-    "Instead, the parent project is required to use 'intermediate' or 'modern' "
-    "CMake CUDA style with first-class CUDA language support (i.e., "
-    "project(foo LANGUAGES C CXX CUDA)). "
-  )
-endif()
+set(CMAKE_BUILD_TYPE_INIT "Release")
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+
+
 
 # project command is required to come after cmake_minimum_required command.
-set(CMAKE_BUILD_TYPE_INIT "Release")
-
-# at least for cmake < 3.24, if CMAKE_CUDA_ARCHITECTURES isn't set at
-# this point, the 'project' call will set it to "52"; for newer cmake
-# set it to 'native'
-if ((${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.24)
-    AND
-    (NOT CMAKE_CUDA_ARCHITECTURES))
-  set(CMAKE_CUDA_ARCHITECTURES "native")
-endif()
-project(Optix-OWL VERSION 1.1.7 LANGUAGES C CXX CUDA)
-if ((${CMAKE_VERSION} VERSION_LESS 3.24)
-    AND
-    ("${CMAKE_CUDA_ARCHITECTURES}" STREQUAL 52))
-  set(CMAKE_CUDA_ARCHITECTURES OFF)
-endif()
+set(OWL_VERSION ${OWL_VERSION_MAJOR}.${OWL_VERSION_MINOR}.${OWL_VERSION_PATCH})
+project(OWL VERSION ${OWL_VERSION} LANGUAGES C CXX CUDA)
+include(GNUInstallDirs)
 
 if (NOT CMAKE_CUDA_ARCHITECTURES)
   # 'all-major', since cmake-3.24

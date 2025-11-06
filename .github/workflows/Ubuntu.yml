@@ -1,0 +1,87 @@
+name: Ubuntu
+
+#on:
+#  workflow_dispatch:
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      # explicit include-based build matrix, of known valid options
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            cuda: "13.0.2"
+            gcc: 13
+            config: Release
+          - os: ubuntu-24.04
+            cuda: "13.0.2"
+            gcc: 13
+            config: Debug
+          - os: ubuntu-24.04
+            cuda: "12.6.0"
+            gcc: 13
+            config: Release
+          - os: ubuntu-24.04
+            cuda: "12.6.0"
+            gcc: 13
+            config: Debug
+          - os: ubuntu-22.04
+            cuda: "12.0.0"
+            gcc: 11
+            config: Release
+    env:
+      build_dir: "build"
+
+    steps:
+
+      - name: Checkout OWL
+        uses: actions/checkout@v5
+        with:
+          submodules: true
+
+      - name: Install CUDA
+        uses: Jimver/cuda-toolkit@master
+        id: cuda-toolkit
+        with:
+          cuda: ${{ matrix.cuda }}
+          method: 'network'
+          log-file-suffix: '${{matrix.os}}-gcc${{matrix.gcc}}-config${{matrix.config}}.txt'
+
+#      - name: Install CUDA
+#        env:
+#          cuda: ${{ matrix.cuda }}
+#        run: ./.github/action-scripts/install_cuda_ubuntu.sh
+#        shell: bash
+
+      # Specify the correct host compilers
+      - name: Install/Select gcc and g++
+        run: |
+          sudo apt-get install -y gcc-${{ matrix.gcc }} g++-${{ matrix.gcc }}
+          echo "CC=/usr/bin/gcc-${{ matrix.gcc }}" >> $GITHUB_ENV
+          echo "CXX=/usr/bin/g++-${{ matrix.gcc }}" >> $GITHUB_ENV
+          echo "CUDAHOSTCXX=/usr/bin/g++-${{ matrix.gcc }}" >> $GITHUB_ENV
+
+      - name: cmake configure
+        run: |
+          mkdir ${{github.workspace}}/build
+          cd ${{github.workspace}}/build
+          cmake .. -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/install-DCMAKE_BUILD_TYPE=${{matrix.config}}
+
+      - name: cmake build
+        run: |
+          cd ${{github.workspace}}/build
+          cmake --build . --config ${{ matrix.config }}
+
+      - name: cmake install
+        run: |
+          cd ${{github.workspace}}/build
+          cmake --install .  --config ${{ matrix.config }}
