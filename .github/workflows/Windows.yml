@@ -53,6 +53,12 @@ jobs:
         with:
           submodules: true
 
+      - name: Install CUDA
+        uses: Jimver/cuda-toolkit@master
+        id: cuda-toolkit
+        with:
+          cuda: ${{ matrix.cuda }}
+
 #      - name: Install CUDA on Ubuntu systems
 #        if: contains(matrix.os, 'ubuntu')
 #        env:
@@ -60,12 +66,12 @@ jobs:
 #        run: .github/action-scripts/install-cuda-ubuntu.sh
 #        shell: bash
 
-      - name: Install CUDA on Windows
-        if: contains(matrix.os, 'windows')
-        env:
-          cuda: ${{ matrix.cuda }}
-        run: .github\action-scripts\install-cuda-windows.ps1
-        shell: powershell
+#      - name: Install CUDA on Windows
+#        if: contains(matrix.os, 'windows')
+#        env:
+#          cuda: ${{ matrix.cuda }}
+#        run: .github\action-scripts\install-cuda-windows.ps1
+#        shell: powershell
 
       - name: create shared install dir
         run: |
