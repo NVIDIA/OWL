@@ -27,7 +27,7 @@
 #endif
 
 #ifdef _WIN32
-# if defined(owl_STATIC) || defined(owl_mpi_STATIC)
+# if defined(owl_static_STATIC)
 #  define OWL_INTERFACE /* nothing */
 # elif defined(owl_EXPORTS) || defined(owl_mpi_EXPORTS)
 #  define OWL_INTERFACE __declspec(dllexport)
