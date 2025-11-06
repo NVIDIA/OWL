@@ -53,6 +53,7 @@ jobs:
         id: cuda-toolkit
         with:
           cuda: ${{ matrix.cuda }}
+          log-file-suffix: '${{matrix.os}}-gcc${{matrix.gcc}-config${{matrix.confix}}.txt'
 
 #      - name: Install CUDA
 #        env:
