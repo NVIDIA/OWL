@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "owl_host.h"
+#include "owl/owl_host.h"
 
 namespace owl {
   namespace device {

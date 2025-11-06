@@ -9,28 +9,28 @@ set(OWL_SOURCES
   # -------------------------------------------------------
   # infrastructure
   # -------------------------------------------------------
-  include/owl/owl.h
-  include/owl/owl_host.h
-  include/owl/owl_device.h
-  include/owl/common/arrayND/array2D.h
-  include/owl/common/arrayND/array3D.h
-  include/owl/common/math/AffineSpace.h
-  include/owl/common/math/box.h
-  include/owl/common/math/constants.h
-  include/owl/common/math/fixedpoint.h
-  include/owl/common/math/LinearSpace.h
-  include/owl/common/math/Quaternion.h
-  include/owl/common/math/random.h
-  include/owl/common/math/vec/compare.h
-  include/owl/common/math/vec/functors.h
-  include/owl/common/math/vec/rotate.h
-  include/owl/common/math/vec.h
-  include/owl/common/owl-common.h
-  include/owl/common/parallel/parallel_for.h
-  include/owl/owl.h
-  include/owl/owl_device.h
-  include/owl/owl_device_buffer.h
-  include/owl/owl_host.h
+  ../include/owl/owl.h
+  ../include/owl/owl_host.h
+  ../include/owl/owl_device.h
+  ../include/owl/common/arrayND/array2D.h
+  ../include/owl/common/arrayND/array3D.h
+  ../include/owl/common/math/AffineSpace.h
+  ../include/owl/common/math/box.h
+  ../include/owl/common/math/constants.h
+  ../include/owl/common/math/fixedpoint.h
+  ../include/owl/common/math/LinearSpace.h
+  ../include/owl/common/math/Quaternion.h
+  ../include/owl/common/math/random.h
+  ../include/owl/common/math/vec/compare.h
+  ../include/owl/common/math/vec/functors.h
+  ../include/owl/common/math/vec/rotate.h
+  ../include/owl/common/math/vec.h
+  ../include/owl/common/owl-common.h
+  ../include/owl/common/parallel/parallel_for.h
+#  ../include/owl/owl.h
+#  ../include/owl/owl_device.h
+#  ../include/owl/owl_device_buffer.h
+#  ../include/owl/owl_host.h
   helper/cuda.h
   helper/optix.h
   common.h
@@ -150,8 +150,17 @@ target_link_libraries(owl-config INTERFACE
 if (OWL_CUDA_STATIC)
   target_compile_definitions(owl-config INTERFACE -DOWL_CUDA_STATIC=1)
 endif()
-target_link_libraries(owl PUBLIC owl-config)
-target_link_libraries(owl_static PUBLIC owl-config)
+target_link_libraries(owl PUBLIC
+  $<BUILD_INTERFACE:owl-config>
+)
+target_link_libraries(owl_static PUBLIC
+  $<BUILD_INTERFACE:owl-config>
+)
+if (APPLE)
+  set_target_properties(owl PROPERTIES INSTALL_RPATH "$loader_path")
+else()
+  set_target_properties(owl PROPERTIES INSTALL_RPATH "$ORIGIN")
+endif()
 
 if (OWL_HAVE_TBB AND TBB_FOUND)
   if (TARGET TBB::tbb)
@@ -183,7 +192,8 @@ endif()
 target_include_directories(owl-config
   INTERFACE
     ${PROJECT_SOURCE_DIR}
-    ${CMAKE_CURRENT_LIST_DIR}/include
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    #CMAKE_CURRENT_LIST_DIR}/include
 )
 
 if (WIN32)
