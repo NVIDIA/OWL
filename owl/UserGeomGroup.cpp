@@ -27,6 +27,9 @@ namespace owl {
     buildFlags( (_buildFlags > 0) ? _buildFlags : defaultBuildFlags)
   {}
 
+  std::string UserGeomGroup::toString() const
+  { return "UserGeomGroup"; }
+  
   void UserGeomGroup::buildOrRefit(bool FULL_REBUILD)
   {
     for (auto child : geometries) {

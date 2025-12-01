@@ -48,8 +48,9 @@ namespace owl {
     assert(object);
     std::shared_ptr<T> asT = std::dynamic_pointer_cast<T>(object);
     if (object && !asT) {
-      const std::string objectTypeID = typeid(*object.get()).name();
-	
+      auto *obj = object.get();
+      const std::string objectTypeID = typeid(*obj).name();
+       
       const std::string tTypeID = typeid(T).name();
       OWL_RAISE("could not convert APIHandle of type "
                 + objectTypeID
