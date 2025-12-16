@@ -17,7 +17,7 @@ namespace owl {
     UserGeomGroup(Context *const context,
                    size_t numChildren,
                    unsigned int buildFlags);
-    virtual std::string toString() const { return "UserGeomGroup"; }
+    virtual std::string toString() const override;
 
     /*! build() and refit() share most of their code; this functoin
         does all that code, with only minor specialization based on

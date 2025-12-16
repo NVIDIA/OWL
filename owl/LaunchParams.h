@@ -27,7 +27,7 @@ namespace owl {
 
     Object::DeviceData::SP createOn(const DeviceContext::SP &device) override;
     
-    virtual std::string toString() const { return "LaunchParamsType"; }
+    virtual std::string toString() const override;
   };
 
   /*! an object that stores the variables used for building the launch

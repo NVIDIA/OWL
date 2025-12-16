@@ -24,6 +24,8 @@ namespace owl {
   {
     return std::make_shared<Object::DeviceData>(device);
   }
+
+  std::string LaunchParamsType::toString() const { return "LaunchParamsType"; }
   
   
   // ------------------------------------------------------------------

@@ -68,10 +68,12 @@ inline Buffer::SP checkGet(OWLBuffer _buffer)
 }
 
 /* return the cuda stream associated with the given device. */
-OWL_API CUstream owlContextGetStream(OWLContext _context, int deviceID)
+OWL_API cudaStream_t owlContextGetStream(OWLContext _context, int deviceID)
 {
   LOG_API_CALL();
-  return checkGet(_context)->getDevice(deviceID)->getStream();
+  CUstream s = checkGet(_context)->getDevice(deviceID)->getStream();
+  
+  return (cudaStream_t&)s;
 }
 
 /* return the optix context associated with the given device. */
@@ -748,14 +750,15 @@ owlTexture2DCreate(OWLContext _context,
   return (OWLTexture)context->createHandle(texture);
 }
 
-OWL_API CUtexObject
+// OWL_API CUtexObject
+OWL_API cudaTextureObject_t
 owlTextureGetObject(OWLTexture _texture, int deviceID)
 {
   LOG_API_CALL();
   assert(_texture);
   Texture::SP texture = ((APIHandle *)_texture)->get<Texture>();
   assert(texture);
-  return texture->getObject(deviceID);
+  return (cudaTextureObject_t)texture->getObject(deviceID);
 }
 
 OWL_API owl2ui
@@ -876,14 +879,15 @@ owlGroupGetTraversable(OWLGroup _group, int deviceID)
   return group->getTraversable(group->context->getDevice(deviceID));
 }
 
-OWL_API CUstream
+OWL_API cudaTextureObject_t
+// OWL_API CUstream
 owlParamsGetCudaStream(OWLLaunchParams _lp, int deviceID)
 {
   LOG_API_CALL();
   assert(_lp);
   LaunchParams::SP lp = ((APIHandle *)_lp)->get<LaunchParams>();
   assert(lp);
-  return lp->getCudaStream(lp->context->getDevice(deviceID));
+  return (cudaTextureObject_t)lp->getCudaStream(lp->context->getDevice(deviceID));
 }
 
 OWL_API void 

@@ -107,7 +107,7 @@ namespace owl {
     int getSBTOffset() const override { return sbtOffset; }
     
     /*! pretty-printer, for printf-debugging */
-    std::string toString() const;
+    std::string toString() const override;
     
     /*! list of child geometries to use in this BVH */
     std::vector<Geom::SP> geometries;
