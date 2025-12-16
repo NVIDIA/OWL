@@ -3,8 +3,6 @@
 
 find_package(OptiX REQUIRED)
 
-include(cmake/configure_tbb.cmake)
-
 set(OWL_SOURCES
   # -------------------------------------------------------
   # infrastructure
@@ -191,11 +189,17 @@ endif()
 
 target_include_directories(owl-config
   INTERFACE
-    ${PROJECT_SOURCE_DIR}
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-    #CMAKE_CURRENT_LIST_DIR}/include
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  #CMAKE_CURRENT_LIST_DIR}/include
 )
-
+target_include_directories(owl  PUBLIC
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+target_include_directories(owl_static PUBLIC
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 if (WIN32)
   target_compile_definitions(owl-config INTERFACE -DNOMINMAX)
 endif()

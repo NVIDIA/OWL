@@ -4,7 +4,7 @@
 
 set(OWL_VERSION_MAJOR 1)
 set(OWL_VERSION_MINOR 2)
-set(OWL_VERSION_PATCH 0)
+set(OWL_VERSION_PATCH 2)
 
 cmake_minimum_required(VERSION 3.24)
 
@@ -78,6 +78,10 @@ include(embed_optixir)
 
 option(OWL_BUILD_SHARED "Build OWL as a shared library? (otherwise static)" OFF)
 set(BUILD_SHARED_LIBS ${OWL_BUILD_SHARED}) # use 'OWL_' naming convention
+
+
+include(owl/cmake/configure_tbb.cmake)
+
 
 # ------------------------------------------------------------------
 # owl library itself, including owl-common

@@ -5,7 +5,8 @@
 
 #pragma once
 
-#include <cuda.h>
+// #include <cuda.h>
+#include <cuda_runtime.h>
 #include <driver_types.h>
 #include <optix.h>
 
@@ -445,7 +446,7 @@ owlSetMaxInstancingDepth(OWLContext context,
                          int32_t maxInstanceDepth);
 
 /* return the cuda stream associated with the given device. */
-OWL_API CUstream
+OWL_API cudaStream_t
 owlContextGetStream(OWLContext context, int deviceID);
 
 /* return the optix context associated with the given device. */
@@ -723,7 +724,8 @@ owlTexture2DDestroy(OWLTexture texture);
 
 /*! returns the device handle of the given texture for the given
     device ID. Useful for custom texture object arrays. */
-OWL_API CUtexObject
+OWL_API cudaTextureObject_t
+// OWL_API CUtexObject
 owlTextureGetObject(OWLTexture texture, int deviceID);
 
 /*! returns the dimensions (number of pixels in) a given texture. */
@@ -893,7 +895,7 @@ owlAsyncLaunch2DOnDevice(OWLRayGen rayGen, int dims_x, int dims_y,
                         int deviceID, OWLParams params);
 
 
-OWL_API CUstream
+OWL_API cudaTextureObject_t//CUstream
 owlParamsGetCudaStream(OWLParams params, int deviceID);
 
 /*! wait for the async launch to finish */
