@@ -28,7 +28,7 @@ if (@OWL_HAVE_TBB@)
   set(OWL_HAVE_TBB ON)
 endif()
 
-find_dependency(CUDATookKit)
+find_dependency(CUDAToolkit)
    
 
 foreach(component ${owl_FIND_COMPONENTS})
