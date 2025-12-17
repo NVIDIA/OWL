@@ -23,10 +23,12 @@ set(OWL_DATAROOTDIR
   ${CMAKE_CURRENT_LIST_DIR}/../../../@CMAKE_INSTALL_DATAROOTDIR@/owl
   )
 
-if (@OWL_HAVE_TBB@ AND @TBB_FOUND@)
+if (@OWL_HAVE_TBB@)
   find_dependency(TBB)
   set(OWL_HAVE_TBB ON)
 endif()
+
+find_dependency(CUDAToolkit)
    
 
 foreach(component ${owl_FIND_COMPONENTS})

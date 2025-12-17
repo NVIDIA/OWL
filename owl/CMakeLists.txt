@@ -196,9 +196,11 @@ target_include_directories(owl-config
 )
 target_include_directories(owl  PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/owl/optix/include>
 )
 target_include_directories(owl_static PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/owl/optix/include>
 )
 if (WIN32)
   target_compile_definitions(owl-config INTERFACE -DNOMINMAX)
