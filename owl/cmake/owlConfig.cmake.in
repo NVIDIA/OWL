@@ -28,8 +28,10 @@ if (@OWL_HAVE_TBB@)
   set(OWL_HAVE_TBB ON)
 endif()
 
-find_dependency(CUDAToolkit)
+find_package(CUDAToolkit REQUIRED)
+target_link_libraries(owl::owl INTERFACE CUDA::cudart_static)
    
+include(${CMAKE_CURRENT_LIST_DIR}/embed_ptx.cmake)
 
 foreach(component ${owl_FIND_COMPONENTS})
   # For requested component, execute its "config" script
@@ -43,3 +45,5 @@ foreach(component ${owl_FIND_COMPONENTS})
 endforeach()
 
 check_required_components(@PROJECT_NAME@)
+
+

@@ -142,6 +142,8 @@ write_basic_package_version_file(
 install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/owlConfig.cmake
   ${CMAKE_CURRENT_BINARY_DIR}/owlConfigVersion.cmake
+  ${PROJECT_SOURCE_DIR}/owl/cmake/embed_ptx.cmake
+  ${PROJECT_SOURCE_DIR}/owl/cmake/run_bin2c.cmake
   DESTINATION
   ${OWL_CMAKE_INSTALL_DESTINATION}
   )
