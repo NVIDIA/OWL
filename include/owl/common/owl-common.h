@@ -11,7 +11,8 @@
 // #include <math.h> // using cmath causes issues under Windows
 
 #include <cstdlib>
-#include <stdio.h>
+#include <cstdio>
+#include <cstdint>
 #include <iostream>
 #include <stdexcept>
 #include <memory>
