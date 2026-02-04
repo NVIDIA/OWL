@@ -11,14 +11,13 @@
 // #include <math.h> // using cmath causes issues under Windows
 
 #include <cstdlib>
-#include <stdio.h>
+#include <cstdio>
 #include <iostream>
 #include <stdexcept>
 #include <memory>
-#include <assert.h>
+#include <cassert>
 #include <string>
-#include <math.h>
-// #include <cmath>
+#include <cmath>
 #include <cfloat>
 #include <algorithm>
 #include <sstream>
