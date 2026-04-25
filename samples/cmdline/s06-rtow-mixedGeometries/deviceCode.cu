@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 
-
 #include "GeomTypes.h"
 #include <optix_device.h>
 
