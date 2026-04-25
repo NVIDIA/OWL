@@ -203,7 +203,8 @@ namespace owl {
     VariableT(const OWLVarDecl *const varDecl)
       : Variable(varDecl)
     {}
-    
+
+    using Variable::set;
     void set(const T &value) override { this->value = value; }
 
     /*! writes the device specific representation of the given type */
