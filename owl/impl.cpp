@@ -1079,6 +1079,12 @@ OWL_API void owlRayGenRelease(OWLRayGen handle)
   releaseObject<RayGen>((APIHandle*)handle);
 }
   
+OWL_API void owlParamsRelease(OWLParams handle)
+{
+  LOG_API_CALL();
+  releaseObject<LaunchParams>((APIHandle*)handle);
+}
+  
 OWL_API void owlVariableRelease(OWLVariable variable)
 {
   LOG_API_CALL();

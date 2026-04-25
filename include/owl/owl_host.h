@@ -478,6 +478,11 @@ owlParamsCreate(OWLContext        context,
                 const OWLVarDecl *vars,
                 int               numVars);
 
+/*! releases a previously created OWLParams object */
+OWL_API void 
+owlParamsRelease(OWLParams params);
+
+
 OWL_API OWLRayGen
 owlRayGenCreate(OWLContext        context,
                 OWLModule         module,
