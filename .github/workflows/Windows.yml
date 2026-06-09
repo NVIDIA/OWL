@@ -30,17 +30,17 @@ jobs:
             config: Release
           - os: windows-2025
             cuda: "12.6.2"
-            visual-studio: "Visual Studio 17 2022"
+            visual-studio: "Visual Studio 18 2026"
             shell: "powershell"
             config: Release
           - os: windows-2025
             cuda: "13.0.0"
-            visual-studio: "Visual Studio 17 2022"
+            visual-studio: "Visual Studio 18 2026"
             shell: "powershell"
             config: Release
           - os: windows-2025
             cuda: "13.0.2"
-            visual-studio: "Visual Studio 17 2022"
+            visual-studio: "Visual Studio 18 2026"
             shell: "powershell"
             config: Release
 
