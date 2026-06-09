@@ -71,6 +71,7 @@ endif()
 #include(configure_tbb)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(embed_ptx)
