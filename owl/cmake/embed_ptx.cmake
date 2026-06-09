@@ -78,6 +78,15 @@ function(embed_ptx)
   set_property(TARGET ${PTX_TARGET} PROPERTY CUDA_PTX_COMPILATION ON)
   set_property(TARGET ${PTX_TARGET} PROPERTY CUDA_ARCHITECTURES OFF)
   target_compile_options(${PTX_TARGET} PRIVATE -lineinfo -ptx)
+  if (WIN32)
+    target_compile_options(${PTX_TARGET} PRIVATE
+      $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler="/Zc:preprocessor">
+    )
+    target_compile_options(${PTX_TARGET} PRIVATE
+      $<$<COMPILE_LANGUAGE:CUDA>:-std=c++17>
+    )
+  endif()
+
 
   ## Create command to run the bin2c via the CMake script ##
 

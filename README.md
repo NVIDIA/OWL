@@ -5,8 +5,39 @@ Build Status:
 [![Ubuntu](https://github.com/NVIDIA/owl/actions/workflows/Ubuntu.yml/badge.svg)](https://github.com/NVIDIA/owl/actions/workflows/Ubuntu.yml)
 
 <!--- ------------------------------------------------------- -->
-## What is OWL?
+## Common Issues
 
+If you're new to OWL, please skip this section and continue reading at "What is OWL?".
+
+For those that are already using OWL, here's a brief list of some
+issues that some users ran/run into:
+
+### `CUDA_ERROR_UNSUPPORTED_PTX_VERSION`
+
+Problem: OWL program builds all right, but when the resulting binary
+is started it throws an error like `unknown CUDA error when building
+module for bounds program kernel CUDA_ERROR_UNSUPPORTED_PTX_VERSION
+log: ptxas application ptx input, line 9; fatal : Unsupported .version
+9.3; current version is '9.2'` (or, of course, similar PTX version
+strings).
+
+What this means is that you are using a CDUA version that's newer than
+what your driver expects.  Your driver was built with a certain CUDA
+version in mind, and it will not be able to ruintime-compile PTX code
+that's newer than that. To check which version of CUDA your driver can
+handle, you can also call the `nvidia-smi` utility; in the top right
+it will tell you which CUDA version it was built with.
+
+To fix: either update to a newer driver (that understands your newer
+CDUA version), or use an older version of CUDA (that your driver
+understands).
+
+### On Windows: 
+
+
+<!--- ------------------------------------------------------- -->
+## What is OWL?
+ 
 OWL is a convenience/productivity-oriented library on top of OptiX
 (version 7 and newer), and aims at making it easier to write OptiX
 programs by taking some of the more arcane parts of that job (like
@@ -236,6 +267,104 @@ OptiX directory by adding it to `CMAKE_PREFIX_PATH` (where it works on all
 platforms similar to how `LD_LIBRARY_PATH` resolves runtime linking on Linux).
 Note that `CMAKE_PREFIX_PATH` can be specified as an environment variable or as
 a CMake variable when you run CMake on your project.
+
+
+
+
+
+<!--- ------------------------------------------------------- -->
+# Troubleshooting / Common Issues
+
+Using OWL (or even just OptiX) requires multiple different tools /
+technologies to work together: not just to you need working/matching
+CUDA and C++ compiler chains, using OptiX also requires involvement
+with the driver (which will have to run the generated code - which
+also required JIT-compiling device code), etc. And as always when
+multiple things need to work together it is possible to end up with
+configurations that do not work - and sometimes, it can be hard to
+spot what's going wrong.
+
+In this section, we gather a few issues that have come up so far:
+
+## `CUDA_ERROR_UNSUPPORTED_PTX_VERSION`
+
+### Problem
+
+OWL program builds all right, but when the resulting binary
+is started it throws an error like `unknown CUDA error when building
+module for bounds program kernel CUDA_ERROR_UNSUPPORTED_PTX_VERSION
+log: ptxas application ptx input, line 9; fatal : Unsupported .version
+9.3; current version is '9.2'` (or, of course, similar PTX version
+strings).
+
+### Explanation
+
+What this means is that you are using a CUDA version that is newer
+than what your driver expects.  Your driver was built with a certain
+CUDA version in mind, and it will not be able to ruintime-compile PTX
+code that's newer than that. To check which version of CUDA your
+driver can handle, you can also call the `nvidia-smi` utility; in the
+top right it will tell you which CUDA version it was built with:
+```
+$ /c/Windows/System32/nvidia-smi
+Tue Jun  9 09:46:43 2026
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 595.79                 Driver Version: 595.79         CUDA Version: 13.2     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                  Driver-Model | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA RTX PRO 3000 Blac...  WDDM  |   00000000:01:00.0 Off |                  Off |
+| N/A   39C    P0             17W /   35W |       0MiB /  12227MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+```
+
+In this case, my system's driver is 595.79, and it was built with CUDA
+13.2 - which, coincidentally, generates PTX version 9.2.
+
+However, checking my CUDA version:
+```
+$ nvcc --version
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2026 NVIDIA Corporation
+Built on Fri_Apr_24_19:26:09_Pacific_Daylight_Time_2026
+Cuda compilation tools, release 13.3, V13.3.33
+Build cuda_13.3.r13.3/compiler.37862127_0
+```
+...shows I'm building with CUDA version 13.3 - which generates PTX
+version 9.3, which that driver cannot understand.
+
+### Fix
+
+Either update to a newer driver (that understands your newer CDUA
+version), or use an older version of CUDA (that your driver
+understands).
+
+If for some reason you cannot do either you may also try to make OWL
+'fake' a different PTX version by setting the environment variable
+`OWL_FAKE_PTX_VERSION` to whatever version you want to use (in the
+above case, `export OWL_FAKE_PTX_VERSION=9.2`). However, this is not
+guaranteed to work, should only ever be attempted as a last resource,
+and should always be considered as "use at your own risk".
+
+## Compilation on Windows breaks with some error about outdated preprocessor defines...
+
+Latest OWL should fix that issue.
+
+
+
+
+
 
 
 
