@@ -23,26 +23,16 @@ jobs:
             visual-studio: "Visual Studio 17 2022"
             shell: "powershell"
             config: Release
-          - os: windows-2022
-            cuda: "13.0.0"
-            visual-studio: "Visual Studio 17 2022"
+          - os: windows-2025
+            cuda: "13.2.0"
+            visual-studio: "Visual Studio 18 2026"
             shell: "powershell"
             config: Release
           - os: windows-2025
-            cuda: "12.6.2"
-            visual-studio: "Visual Studio 17 2022"
+            cuda: "13.2.0"
+            visual-studio: "Visual Studio 18 2026"
             shell: "powershell"
-            config: Release
-          - os: windows-2025
-            cuda: "13.0.0"
-            visual-studio: "Visual Studio 17 2022"
-            shell: "powershell"
-            config: Release
-          - os: windows-2025
-            cuda: "13.0.2"
-            visual-studio: "Visual Studio 17 2022"
-            shell: "powershell"
-            config: Release
+            config: Debug
 
     env:
       cmake_generator: "${{ matrix.visual-studio }}"

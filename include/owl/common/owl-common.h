@@ -127,7 +127,7 @@ inline void owlRaise_impl(std::string str)
 
 #define OWL_NOTIMPLEMENTED throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+" not implemented")
 
-#ifdef WIN32
+#ifdef DISABLE_OWL_TERMINAL_MACROS
 # define OWL_TERMINAL_RED ""
 # define OWL_TERMINAL_GREEN ""
 # define OWL_TERMINAL_LIGHT_GREEN ""

@@ -204,6 +204,9 @@ target_include_directories(owl_static PUBLIC
 )
 if (WIN32)
   target_compile_definitions(owl-config INTERFACE -DNOMINMAX)
+  target_compile_options(owl-config INTERFACE# PRIVATE
+    $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler="/Zc:preprocessor">
+  )
 endif()
 
 add_library(owl::owl ALIAS owl)
