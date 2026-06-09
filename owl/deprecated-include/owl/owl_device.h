@@ -173,7 +173,7 @@ namespace owl {
                ray.visibilityMask,
                /*rayFlags     */ rayFlags,
                /*SBToffset    */ ray.rayType,
-               /*SBTstride    */ ray.numRayTypes * (ray.disablePerGeometrySBTRecords) ? 0 : 1,
+               /*SBTstride    */ ray.numRayTypes * (ray.disablePerGeometrySBTRecords ? 0 : 1),
                /*missSBTIndex */ ray.rayType,              
                p0,
                p1);
@@ -228,7 +228,7 @@ namespace owl {
                ray.visibilityMask,
                /*rayFlags     */0u,
                /*SBToffset    */ray.rayType + numRayTypes*sbtOffset,
-               /*SBTstride    */numRayTypes * (ray.disablePerGeometrySBTRecords) ? 0 : 1,
+               /*SBTstride    */numRayTypes * (ray.disablePerGeometrySBTRecords ? 0 : 1),
                /*missSBTIndex */ray.rayType,
                p0,
                p1);
