@@ -4,7 +4,7 @@
 
 set(OWL_VERSION_MAJOR 1)
 set(OWL_VERSION_MINOR 2)
-set(OWL_VERSION_PATCH 5)
+set(OWL_VERSION_PATCH 6)
 
 cmake_minimum_required(VERSION 3.24)
 
