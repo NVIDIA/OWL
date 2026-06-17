@@ -900,7 +900,7 @@ owlAsyncLaunch2DOnDevice(OWLRayGen rayGen, int dims_x, int dims_y,
                         int deviceID, OWLParams params);
 
 
-OWL_API cudaTextureObject_t//CUstream
+OWL_API cudaStream_t
 owlParamsGetCudaStream(OWLParams params, int deviceID);
 
 /*! wait for the async launch to finish */

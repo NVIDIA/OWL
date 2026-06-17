@@ -1,7 +1,6 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA
+// CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
-
-
 
 #pragma once
 
@@ -20,7 +19,7 @@ namespace owl {
 
     RegisteredObject(Context *const context,
                      ObjectRegistry &registry);
-    virtual ~RegisteredObject();
+    ~RegisteredObject() override;
 
     /*! the ID we're registered by - should only ever get set to any
         useful value in the constructor, and get set to -1 when the

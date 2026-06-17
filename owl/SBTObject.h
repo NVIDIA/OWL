@@ -1,7 +1,6 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA
+// CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
-
-
 
 #pragma once
 
@@ -28,7 +27,7 @@ namespace owl {
                   const std::vector<OWLVarDecl> &varDecls);
 
     /*! clean up; in particular, frees the vardecls */
-    virtual ~SBTObjectType();
+    ~SBTObjectType() override;
     
     /*! find index of variable with given name, or -1 if not exists */
     int getVariableIdx(const std::string &varName);
@@ -61,7 +60,7 @@ namespace owl {
 
 
 
-  /*! abstract base classs for any object that can store variables and
+  /*! abstract base class for any object that can store variables and
       write itself into a device-side shader binding table (ie, raygen
       programs, closest hit programs, etc. Each SBTObjectBase has a
       type that describes its variables, but the actual work for
@@ -73,7 +72,7 @@ namespace owl {
     SBTObjectBase(Context *const context,
                   ObjectRegistry &registry,
                   std::shared_ptr<SBTObjectType> type);
-    virtual ~SBTObjectBase() = default;
+    ~SBTObjectBase() override;
     
     /*! returns whether this object has a variable of this name */
     inline bool hasVariable(const std::string &name);
@@ -117,16 +116,17 @@ namespace owl {
       : SBTObjectBase(context,registry,type),
         type(type)
     {}
-    virtual ~SBTObject() = default;
     
-    virtual std::string toString() const { return "SBTObject<"+type->toString()+">"; }
+    ~SBTObject() override
+    {}
+    
+    virtual std::string toString() const
+    { return "SBTObject<"+type->toString()+">"; }
     
     /*! our own type description, that tells us which variables (of
       which type, etc) we have */
     std::shared_ptr<ObjectType> const type;
   };
-
-
 
   // ------------------------------------------------------------------
   // implementation section
@@ -138,8 +138,8 @@ namespace owl {
     return type->hasVariable(name);
   }
   
-    /*! return shared-ptr to this variable - should only be called for
-      variables that we actually own */
+  /*! return shared-ptr to this variable - should only be called for
+    variables that we actually own */
   inline Variable::SP SBTObjectBase::getVariable(const std::string &name)
   {
     int varID = type->getVariableIdx(name);
