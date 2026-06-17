@@ -4,7 +4,7 @@
 
 set(OWL_VERSION_MAJOR 1)
 set(OWL_VERSION_MINOR 2)
-set(OWL_VERSION_PATCH 6)
+set(OWL_VERSION_PATCH 7)
 
 cmake_minimum_required(VERSION 3.24)
 
@@ -33,6 +33,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # project command is required to come after cmake_minimum_required command.
 set(OWL_VERSION ${OWL_VERSION_MAJOR}.${OWL_VERSION_MINOR}.${OWL_VERSION_PATCH})
+
 project(OWL VERSION ${OWL_VERSION} LANGUAGES C CXX CUDA)
 include(GNUInstallDirs)
 
@@ -56,6 +57,8 @@ if (NOT OWL_IS_SUBPROJECT)
   endif()
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+else()
+  set(OWL_VERSION ${OWL_VERSION} PARENT_SCOPE)
 endif()
 
 # ------------------------------------------------------------------
@@ -68,7 +71,6 @@ else()
   # but give the user a way of turning that off, too:
   option(OWL_BUILD_SAMPLES "Build the Samples?" ON)
 endif()
-#include(configure_tbb)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CUDA_STANDARD 17)
