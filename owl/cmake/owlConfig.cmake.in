@@ -21,7 +21,9 @@ set(owl_FOUND ON)
 
 set(OWL_DATAROOTDIR
   ${CMAKE_CURRENT_LIST_DIR}/../../../@CMAKE_INSTALL_DATAROOTDIR@/owl
-  )
+)
+
+set(OWL_VERSION "@OWL_VERSION@")
 
 if (@OWL_HAVE_TBB@)
   find_dependency(TBB)
