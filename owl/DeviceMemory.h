@@ -1,7 +1,6 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA
+// CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
-
-
 
 #pragma once
 
@@ -124,11 +123,13 @@ namespace owl {
     
   struct PinnedHostMem {
     PinnedHostMem() = default;
-    ~PinnedHostMem() { if (ptr) cudaFree(ptr); }
+    ~PinnedHostMem() {
+      if (ptr) OWL_CUDA_CALL_NOTHROW(FreeHost(ptr));
+    }
     void resize(size_t N) {
-      if (ptr) cudaFree(ptr);
+      if (ptr) OWL_CUDA_CALL(Free(ptr));
       ptr = 0;
-      if (N > 0) cudaMallocHost(&ptr,N);
+      if (N > 0) OWL_CUDA_CALL(MallocHost(&ptr,N));
     }
     uint8_t *data() { return ptr; }
     

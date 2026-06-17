@@ -1,7 +1,6 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA
+// CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
-
-
 
 #include "LaunchParams.h"
 #include "Context.h"
@@ -11,13 +10,16 @@ namespace owl {
   // ------------------------------------------------------------------
   // LaunchParamsType
   // ------------------------------------------------------------------
-  
+
   LaunchParamsType::LaunchParamsType(Context *const context,
                                      size_t varStructSize,
                                      const std::vector<OWLVarDecl> &varDecls)
     : SBTObjectType(context,context->launchParamTypes,varStructSize,varDecls)
   {}
 
+  LaunchParamsType::~LaunchParamsType()
+  {}
+  
   /*! creates the device-specific data for this group */
   Object::DeviceData::SP
   LaunchParamsType::createOn(const DeviceContext::SP &device)
@@ -48,7 +50,8 @@ namespace owl {
 
   LaunchParams::DeviceData::~DeviceData()
   {
-    cudaStreamDestroy(stream);
+    if (stream)
+      OWL_CUDA_CALL_NOTHROW(StreamDestroy(stream));
   }
   
   // ------------------------------------------------------------------
@@ -64,6 +67,9 @@ namespace owl {
     assert(type.get());
   }
 
+  LaunchParams::~LaunchParams()
+  {}
+  
   /*! pretty-printer, for printf-debugging */
   std::string LaunchParams::toString() const 
   {
