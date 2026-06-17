@@ -5,37 +5,6 @@ Build Status:
 [![Ubuntu](https://github.com/NVIDIA/owl/actions/workflows/Ubuntu.yml/badge.svg)](https://github.com/NVIDIA/owl/actions/workflows/Ubuntu.yml)
 
 <!--- ------------------------------------------------------- -->
-## Common Issues
-
-If you're new to OWL, please skip this section and continue reading at "What is OWL?".
-
-For those that are already using OWL, here's a brief list of some
-issues that some users ran/run into:
-
-### `CUDA_ERROR_UNSUPPORTED_PTX_VERSION`
-
-Problem: OWL program builds all right, but when the resulting binary
-is started it throws an error like `unknown CUDA error when building
-module for bounds program kernel CUDA_ERROR_UNSUPPORTED_PTX_VERSION
-log: ptxas application ptx input, line 9; fatal : Unsupported .version
-9.3; current version is '9.2'` (or, of course, similar PTX version
-strings).
-
-What this means is that you are using a CDUA version that's newer than
-what your driver expects.  Your driver was built with a certain CUDA
-version in mind, and it will not be able to ruintime-compile PTX code
-that's newer than that. To check which version of CUDA your driver can
-handle, you can also call the `nvidia-smi` utility; in the top right
-it will tell you which CUDA version it was built with.
-
-To fix: either update to a newer driver (that understands your newer
-CDUA version), or use an older version of CUDA (that your driver
-understands).
-
-### On Windows: 
-
-
-<!--- ------------------------------------------------------- -->
 ## What is OWL?
  
 OWL is a convenience/productivity-oriented library on top of OptiX
@@ -359,7 +328,16 @@ and should always be considered as "use at your own risk".
 
 ## Compilation on Windows breaks with some error about outdated preprocessor defines...
 
-Latest OWL should fix that issue.
+Latest OWL should fix that issue. If you see this error in your own
+sources, adding this may help
+```
+if (WIN32)
+  target_compile_options(<your_target> INTERFACE/PRIVATE/PUBLIC
+    $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler="/Zc:preprocessor">
+  )
+endif()
+
+```
 
 
 

@@ -82,9 +82,9 @@ function(embed_ptx)
     target_compile_options(${PTX_TARGET} PRIVATE
       $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler="/Zc:preprocessor">
     )
-    target_compile_options(${PTX_TARGET} PRIVATE
-      $<$<COMPILE_LANGUAGE:CUDA>:-std=c++17>
-    )
+#    target_compile_options(${PTX_TARGET} PRIVATE
+#      $<$<COMPILE_LANGUAGE:CUDA>:-std=c++17>
+#    )
   endif()
 
 
