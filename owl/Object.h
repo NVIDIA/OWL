@@ -1,7 +1,6 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2025-2026
+// NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
-
-
 
 #pragma once
 
@@ -9,7 +8,8 @@
 
 namespace owl {
 
-  /*! convert a OWLDataType enum into a strict that represents the name of that type */
+  /*! convert a OWLDataType enum into a strict that represents the
+      name of that type */
   std::string typeToString(OWLDataType type);
 
   /*! returns number of bytes for given data type (where applicable) */

@@ -1,7 +1,6 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA
+// CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
-
-
 
 #include "Context.h"
 #include "UserGeom.h"
@@ -216,7 +215,7 @@ namespace owl {
     destroyPipeline();
     
     OPTIX_CHECK(optixDeviceContextDestroy(optixContext));
-    cudaStreamDestroy(stream);
+    OWL_CUDA_CALL_NOTHROW(StreamDestroy(stream));
   }
   
   
@@ -243,7 +242,6 @@ namespace owl {
     OPTIX_CHECK(optixPipelineDestroy(pipeline));
     pipeline = 0;
   }
-  
   
   void DeviceContext::configurePipelineOptions(bool debug)
   {

@@ -1,7 +1,6 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA
+// CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
-
-
 
 #include <owl/owl.h>
 #include "APIContext.h"
@@ -661,6 +660,7 @@ OWL_API void owlContextDestroy(OWLContext _context)
   // will remain alive even if the context frees all api handles.
   APIContext::SP context = checkGet(_context);
   context->releaseAll();
+  context = {};
 }
 
 /*! creates a device buffer where every device has its own local
@@ -879,15 +879,14 @@ owlGroupGetTraversable(OWLGroup _group, int deviceID)
   return group->getTraversable(group->context->getDevice(deviceID));
 }
 
-OWL_API cudaTextureObject_t
-// OWL_API CUstream
+OWL_API cudaStream_t
 owlParamsGetCudaStream(OWLLaunchParams _lp, int deviceID)
 {
   LOG_API_CALL();
   assert(_lp);
   LaunchParams::SP lp = ((APIHandle *)_lp)->get<LaunchParams>();
   assert(lp);
-  return (cudaTextureObject_t)lp->getCudaStream(lp->context->getDevice(deviceID));
+  return (cudaStream_t)lp->getCudaStream(lp->context->getDevice(deviceID));
 }
 
 OWL_API void 

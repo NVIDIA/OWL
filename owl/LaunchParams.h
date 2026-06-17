@@ -1,7 +1,6 @@
-// SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA
+// CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
-
-
 
 #pragma once
 
@@ -23,7 +22,7 @@ namespace owl {
     LaunchParamsType(Context *const context,
                size_t varStructSize,
                const std::vector<OWLVarDecl> &varDecls);
-    virtual ~LaunchParamsType() = default;
+    ~LaunchParamsType() override;
 
     Object::DeviceData::SP createOn(const DeviceContext::SP &device) override;
     
@@ -44,7 +43,7 @@ namespace owl {
 
       /*! constructor, which allocs all the device-side data */
       DeviceData(const DeviceContext::SP &device, size_t  dataSize);
-      virtual ~DeviceData();
+      ~DeviceData() override;
       
       const size_t            dataSize;
       
@@ -67,6 +66,8 @@ namespace owl {
     /*! create a new instenace of given launch param type */
     LaunchParams(Context *const context,
                  LaunchParamsType::SP type);
+    ~LaunchParams() override;
+    
     /*! create a new instenace of given launch param type */
     
     /*! pretty-printer, for printf-debugging */
