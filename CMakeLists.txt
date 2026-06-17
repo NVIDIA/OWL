@@ -1,10 +1,10 @@
-# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA
+# CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
-
 
 set(OWL_VERSION_MAJOR 1)
 set(OWL_VERSION_MINOR 2)
-set(OWL_VERSION_PATCH 4)
+set(OWL_VERSION_PATCH 5)
 
 cmake_minimum_required(VERSION 3.24)
 
