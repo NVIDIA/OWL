@@ -79,6 +79,7 @@ namespace owl {
   /*! a object that belongs to a context */
   struct ContextObject : public Object {
     typedef std::shared_ptr<ContextObject> SP;
+    using DeviceData = Object::DeviceData;
     
     ContextObject(Context *const context)
       : context(context)
