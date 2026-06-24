@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "Object.h"
+#include "owl/Object.h"
 
 namespace owl {
 
@@ -16,7 +16,8 @@ namespace owl {
       sole job of this class is to properly register and unregister
       itself in the given registry when it gets created/destroyed */
   struct RegisteredObject : public ContextObject {
-
+    using DeviceData = ContextObject::DeviceData;
+    
     RegisteredObject(Context *const context,
                      ObjectRegistry &registry);
     ~RegisteredObject() override;
