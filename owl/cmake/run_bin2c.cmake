@@ -57,7 +57,7 @@ message("embed-ptx_run obj=${obj} -> dir ${obj_dir}")
     endif()
 
     # Append length 
-    string(APPEND file_contents "const uint32_t ${obj_name}_length = ${numBytes};\n\n")
+    string(APPEND file_contents "extern \"C\" const uint32_t ${obj_name}_length = ${numBytes};\n\n")
   endif()
 endforeach()
 

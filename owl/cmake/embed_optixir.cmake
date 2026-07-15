@@ -68,7 +68,7 @@ function(embed_optixir)
 
   ## Create command to run the bin2c via the CMake script ##
 
-  set(EMBED_OPTIXIR_C_FILE ${CMAKE_CURRENT_BINARY_DIR}/${EMBED_OPTIXIR_OUTPUT_TARGET}.c)
+  set(EMBED_OPTIXIR_C_FILE ${CMAKE_CURRENT_BINARY_DIR}/${EMBED_OPTIXIR_OUTPUT_TARGET}.cpp)
   get_filename_component(OUTPUT_FILE_NAME ${EMBED_OPTIXIR_C_FILE} NAME)
   add_custom_command(
     OUTPUT ${EMBED_OPTIXIR_C_FILE}
@@ -83,6 +83,11 @@ function(embed_optixir)
     COMMENT "Generating embedded OPTIXIR file: ${OUTPUT_FILE_NAME}"
   )
 
-  add_library(${EMBED_OPTIXIR_OUTPUT_TARGET} OBJECT)
+  add_library(${EMBED_OPTIXIR_OUTPUT_TARGET} STATIC)
   target_sources(${EMBED_OPTIXIR_OUTPUT_TARGET} PRIVATE ${EMBED_OPTIXIR_C_FILE})
+  set_target_properties(${EMBED_OPTIXIR_OUTPUT_TARGET} 
+    PROPERTIES 
+    CXX_VISIBILITY_PRESET default
+    CUDA_VISIBILITY_PRESET default
+  )
 endfunction()
