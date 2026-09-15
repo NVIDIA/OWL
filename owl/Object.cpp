@@ -115,6 +115,15 @@ namespace owl {
     case OWL_FLOAT4:
       return 4*sizeof(float);
 
+    case OWL_DOUBLE:
+      return sizeof(double);
+    case OWL_DOUBLE2:
+      return 2*sizeof(double);
+    case OWL_DOUBLE3:
+      return 3*sizeof(double);
+    case OWL_DOUBLE4:
+      return 4*sizeof(double);
+
     case OWL_AFFINE3F:
       return sizeof(affine3f);
 
