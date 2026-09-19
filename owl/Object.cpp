@@ -238,6 +238,15 @@ namespace owl {
       return "float3";
     case OWL_FLOAT4:
       return "float4";
+
+    case OWL_DOUBLE:
+      return "double";
+    case OWL_DOUBLE2:
+      return "double2";
+    case OWL_DOUBLE3:
+      return "double3";
+    case OWL_DOUBLE4:
+      return "double4";
       
       // ------------------------------------------------------------------
       // 64 bit
