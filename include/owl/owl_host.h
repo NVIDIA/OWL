@@ -36,7 +36,11 @@
 #  define OWL_INTERFACE __declspec(dllimport)
 # endif
 #elif defined(__clang__) || defined(__GNUC__)
+# if defined(owl_static_STATIC)
+#  define OWL_INTERFACE /* nothing */
+# else
 #  define OWL_INTERFACE __attribute__((visibility("default")))
+# endif
 #else
 #  define OWL_INTERFACE
 #endif
