@@ -145,61 +145,14 @@ namespace owl {
       inline __both__ vec_t size()   const { return upper-lower; }
 
       inline __both__ typename long_type_of<typename T::scalar_t>::type volume() const
-      { return owl::common::volume(size()); }
+      { return owl::common::reduce_mul(size()); }
     
       inline __both__ bool empty() const { return any_less_than(upper,lower); }
 
       vec_t lower, upper;
     };
-  
-    // =======================================================
-    // default functions
-    // =======================================================
-
-    template<typename T>
-    inline __both__ typename long_type_of<T>::type area(const box_t<vec_t<T,2>> &b)
-    { return area(b.upper - b.lower); }
-
-    template<typename T>
-    inline __both__ typename long_type_of<T>::type area(const box_t<vec_t<T,3>> &b)
-    {
-      const vec_t<T,3> diag = b.upper - b.lower;
-      return T(2)*(area(vec_t<T,2>(diag.x,diag.y))+
-                  area(vec_t<T,2>(diag.y,diag.z))+
-                  area(vec_t<T,2>(diag.z,diag.x)));
-    }
-
-    template<typename T>
-    inline __both__ typename long_type_of<T>::type volume(const box_t<vec_t<T,3>> &b)
-    {
-      const vec_t<T,3> diag = b.upper - b.lower;
-      return diag.x*diag.y*diag.z;
-    }
-
-    template<typename T>
-    inline __both__ std::ostream &operator<<(std::ostream &o, const box_t<T> &b)
-    {
-#ifndef __CUDA_ARCH__
-      o << "[" << b.lower << ":" << b.upper << "]";
-#endif
-      return o;
-    }
-
-    template<typename T>
-    inline __both__ box_t<T> intersection(const box_t<T> &a, const box_t<T> &b)
-    { return box_t<T>(max(a.lower,b.lower),min(a.upper,b.upper)); }
-  
-    template<typename T>
-    inline __both__ bool operator==(const box_t<T> &a, const box_t<T> &b)
-    { return a.lower == b.lower && a.upper == b.upper; }
-  
-    template<typename T>
-    inline __both__ bool operator!=(const box_t<T> &a, const box_t<T> &b)
-    { return !(a == b); }
 
 
-    
-  
     // =======================================================
     // default instantiations
     // =======================================================
@@ -223,6 +176,52 @@ namespace owl {
     _define_box_types(double,d);
   
 #undef _define_box_types
+
+    
+    // =======================================================
+    // default functions
+    // =======================================================
+
+    inline __both__ float    surfaceArea(box3f b)
+    { auto s = b.size(); return s.x*s.y+s.x*s.z+s.x*s.w; }
+    inline __both__ double   surfaceArea(box3d b)
+    { auto s = b.size(); return s.x*s.y+s.x*s.z+s.x*s.w; }
+    inline __both__ int64_t  surfaceArea(box3i b)
+    { auto s = b.size(); return s.x*(int64_t)s.y+s.x*(int64_t)s.z+s.x*(int64_t)s.w; }
+    inline __both__ uint64_t surfaceArea(box3ui b)
+    { auto s = b.size(); return s.x*(uint64_t)s.y+s.x*(uint64_t)s.z+s.x*(uint64_t)s.w; }
+    inline __both__ int64_t  surfaceArea(box3l b)
+    { auto s = b.size(); return s.x*(int64_t)s.y+s.x*(int64_t)s.z+s.x*(int64_t)s.w; }
+    inline __both__ uint64_t surfaceArea(box3ul b)
+    { auto s = b.size(); return s.x*(uint64_t)s.y+s.x*(uint64_t)s.z+s.x*(uint64_t)s.w; }
+
+    template<typename T>
+    inline __both__ typename long_type_of<T>::type volume(const box_t<vec_t<T,3>> &b)
+    {
+      const vec_t<T,3> diag = b.upper - b.lower;
+      return diag.x*(typename long_type_of<T>::type)diag.y*diag.z;
+    }
+
+    template<typename T>
+    inline __both__ std::ostream &operator<<(std::ostream &o, const box_t<T> &b)
+    {
+#ifndef __CUDA_ARCH__
+      o << "[" << b.lower << ":" << b.upper << "]";
+#endif
+      return o;
+    }
+
+    template<typename T>
+    inline __both__ box_t<T> intersection(const box_t<T> &a, const box_t<T> &b)
+    { return box_t<T>(max(a.lower,b.lower),min(a.upper,b.upper)); }
+  
+    template<typename T>
+    inline __both__ bool operator==(const box_t<T> &a, const box_t<T> &b)
+    { return a.lower == b.lower && a.upper == b.upper; }
+  
+    template<typename T>
+    inline __both__ bool operator!=(const box_t<T> &a, const box_t<T> &b)
+    { return !(a == b); }
 
   } // ::owl::common
 } // ::owl

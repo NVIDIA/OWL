@@ -17,6 +17,8 @@ namespace owl {
     template<typename T> struct long_type_of { typedef T type; };
     template<> struct long_type_of<int32_t>  { typedef int64_t  type; };
     template<> struct long_type_of<uint32_t> { typedef uint64_t type; };
+    template<> struct long_type_of<float>  { typedef float  type; };
+    template<> struct long_type_of<double> { typedef double type; };
   
     template<typename T, int N>
     struct vec_t { T t[N]; };
@@ -278,41 +280,90 @@ namespace owl {
       : x(v.x), y(v.y), z(v.z)
     {}
 
+
+    // =======================================================
+    // default instantiations
+    // =======================================================
+  
+#define define_vec_types(T,t)                  \
+    using vec2##t = vec_t<T,2>;                 \
+    using vec3##t = vec_t<T,3>;                 \
+    using vec4##t = vec_t<T,4>;                 \
+    using vec3##t##a = vec3a_t<T>;              
+  
+    define_vec_types(bool ,b);
+    define_vec_types(int8_t ,c);
+    define_vec_types(int16_t ,s);
+    define_vec_types(int32_t ,i);
+    define_vec_types(int64_t ,l);
+    define_vec_types(uint8_t ,uc);
+    define_vec_types(uint16_t,us);
+    define_vec_types(uint32_t,ui);
+    define_vec_types(uint64_t,ul);
+    define_vec_types(float,f);
+    define_vec_types(double,d);
+  
+#undef define_vec_types
+
+
+
     // =======================================================
     // default functions
     // =======================================================
 
-    template<typename T>
-    inline __both__ typename long_type_of<T>::type area(const vec_t<T,2> &v)
-    { return (typename long_type_of<T>::type)(v.x)*(typename long_type_of<T>::type)(v.y); }
+    inline __both__ float    reduce_add(vec2f v)  { return v.x+v.y; }
+    inline __both__ double   reduce_add(vec2d v)  { return v.x+v.y; }
+    inline __both__ int32_t  reduce_add(vec2i v)  { return v.x+v.y; }
+    inline __both__ int64_t  reduce_add(vec2l v)  { return v.x+v.y; }
+    inline __both__ uint32_t reduce_add(vec2ui v) { return v.x+v.y; }
+    inline __both__ uint64_t reduce_add(vec2ul v) { return v.x+v.y; }
 
-  
-    template<typename T>
-    inline __both__ typename long_type_of<T>::type volume(const vec_t<T,3> &v)
-    { return
-        (typename long_type_of<T>::type)(v.x)*
-        (typename long_type_of<T>::type)(v.y)*
-        (typename long_type_of<T>::type)(v.z);
-    }
-
-    template<typename T>
-    inline __both__ typename long_type_of<T>::type volume(const vec_t<T,4> &v)
-    { return
-        (typename long_type_of<T>::type)(v.x)*
-        (typename long_type_of<T>::type)(v.y)*
-        (typename long_type_of<T>::type)(v.z)*
-        (typename long_type_of<T>::type)(v.w);
-    }
-
-    template<typename T>
-    inline __both__ typename long_type_of<T>::type area(const vec_t<T,3> &v)
-    { return
-        T(2)*((typename long_type_of<T>::type)(v.x)*v.y+
-              (typename long_type_of<T>::type)(v.y)*v.z+
-              (typename long_type_of<T>::type)(v.z)*v.x);
-    }
+    
+    inline __both__ float    reduce_add(vec3f v)  { return v.x+v.y+v.z; }
+    inline __both__ double   reduce_add(vec3d v)  { return v.x+v.y+v.z; }
+    inline __both__ int32_t  reduce_add(vec3i v)  { return v.x+v.y+v.z; }
+    inline __both__ int64_t  reduce_add(vec3l v)  { return v.x+v.y+v.z; }
+    inline __both__ uint32_t reduce_add(vec3ui v) { return v.x+v.y+v.z; }
+    inline __both__ uint64_t reduce_add(vec3ul v) { return v.x+v.y+v.z; }
 
 
+    inline __both__ float    reduce_add(vec4f v)  { return v.x+v.y+v.z+v.w; }
+    inline __both__ double   reduce_add(vec4d v)  { return v.x+v.y+v.z+v.w; }
+    inline __both__ int32_t  reduce_add(vec4i v)  { return v.x+v.y+v.z+v.w; }
+    inline __both__ int64_t  reduce_add(vec4l v)  { return v.x+v.y+v.z+v.w; }
+    inline __both__ uint32_t reduce_add(vec4ui v) { return v.x+v.y+v.z+v.w; }
+    inline __both__ uint64_t reduce_add(vec4ul v) { return v.x+v.y+v.z+v.w; }
+
+
+
+    inline __both__ float    reduce_mul(vec2f v)  { return v.x*v.y; }
+    inline __both__ double   reduce_mul(vec2d v)  { return v.x*v.y; }
+    // use int64 to handle overflows
+    inline __both__ int64_t  reduce_mul(vec2i v)  { return v.x*(int64_t)v.y; }
+    inline __both__ int64_t  reduce_mul(vec2l v)  { return v.x*v.y; }
+    // use int64 to handle overflows
+    inline __both__ uint64_t reduce_mul(vec2ui v) { return v.x*(uint64_t)v.y; }
+    inline __both__ uint64_t reduce_mul(vec2ul v) { return v.x*v.y; }
+
+    
+    inline __both__ float    reduce_mul(vec3f v)  { return v.x*v.y*v.z; }
+    inline __both__ double   reduce_mul(vec3d v)  { return v.x*v.y*v.z; }
+    // use int64 to handle overflows
+    inline __both__ int64_t  reduce_mul(vec3i v)  { return v.x*(int64_t)v.y*v.z; }
+    inline __both__ int64_t  reduce_mul(vec3l v)  { return v.x*v.y*v.z; }
+    // use int64 to handle overflows
+    inline __both__ uint64_t reduce_mul(vec3ui v) { return v.x*(uint64_t)v.y*v.z; }
+    inline __both__ uint64_t reduce_mul(vec3ul v) { return v.x*v.y*v.z; }
+
+
+    inline __both__ float    reduce_mul(vec4f v)  { return v.x*v.y*v.z*v.w; }
+    inline __both__ double   reduce_mul(vec4d v)  { return v.x*v.y*v.z*v.w; }
+    // use int64 to handle overflows
+    inline __both__ int64_t  reduce_mul(vec4i v)  { return v.x*(int64_t)v.y*v.z*(int64_t)v.w; }
+    inline __both__ int64_t  reduce_mul(vec4l v)  { return v.x*v.y*v.z*v.w; }
+    // use int64 to handle overflows
+    inline __both__ uint64_t reduce_mul(vec4ui v) { return v.x*(uint64_t)v.y*v.z*(uint64_t)v.w; }
+    inline __both__ uint64_t reduce_mul(vec4ul v) { return v.x*v.y*v.z*v.w; }
 
     /*! vector cross product */
     template<typename T>
@@ -379,29 +430,6 @@ namespace owl {
       return o;
     }
 
-    // =======================================================
-    // default instantiations
-    // =======================================================
-  
-#define define_vec_types(T,t)                  \
-    using vec2##t = vec_t<T,2>;                 \
-    using vec3##t = vec_t<T,3>;                 \
-    using vec4##t = vec_t<T,4>;                 \
-    using vec3##t##a = vec3a_t<T>;              
-  
-    define_vec_types(bool ,b);
-    define_vec_types(int8_t ,c);
-    define_vec_types(int16_t ,s);
-    define_vec_types(int32_t ,i);
-    define_vec_types(int64_t ,l);
-    define_vec_types(uint8_t ,uc);
-    define_vec_types(uint16_t,us);
-    define_vec_types(uint32_t,ui);
-    define_vec_types(uint64_t,ul);
-    define_vec_types(float,f);
-    define_vec_types(double,d);
-  
-#undef define_vec_types
 
     inline __both__ vec_t<bool,3> ge(const vec3f &a, const vec3f &b)
     { return { a.x >= b.x, a.y >= b.y, a.z >= b.z }; }
