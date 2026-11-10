@@ -514,7 +514,7 @@ namespace owl {
 
     for (size_t rgID=0;rgID<rayGens.size();rgID++) {
       auto rg = rayGens.getPtr(rgID);
-      assert(rg);
+      if (!rg) continue;
       auto &dd = rg->getDD(device);
       
       std::vector<uint8_t> hostMem(dd.rayGenRecordSize);
